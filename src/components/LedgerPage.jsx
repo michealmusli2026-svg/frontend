@@ -1,13 +1,14 @@
 ///////NEw
 import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUser, fetchUserTrade } from "../redux/slice/user";
+import { fetchParty, fetchUser, fetchUserTrade } from "../redux/slice/user";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import AllLedger from "./AllLeadger";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { formatNumberIndian } from "../utils/numberForamt";
+import TradeHeader from "../components/TradeHeader";
 
 const LedgerPage = () => {
   const dispatch = useDispatch();
@@ -18,6 +19,7 @@ const LedgerPage = () => {
     []
   );
   const users = useSelector((state) => state.user?.data);
+  const party = useSelector((state) => state.user?.party);
   const trades = useSelector((state) => state.user?.trade);
   const [selectedUser, setSelectedUser] = useState(null);
   const [ledgeerType, setLedgerType] = useState("party");
@@ -26,33 +28,112 @@ const LedgerPage = () => {
 
   useEffect(() => {
     if (partyName) {
-      const user = users?.users?.find((u) => u.username === partyName);
+      const user = party?.users?.find((u) => u.username === partyName);
       setSelectedUser(user);
     }
-  }, []);
+  }, [partyName]);
   // Fetch users on mount
   useEffect(() => {
     dispatch(fetchUser());
+    dispatch(fetchParty( {userId: userProfile.user.id}));
+    // dispatch(fetchParty({ userId: 1 }));
   }, [dispatch]);
 
   // Fetch trades when user changes
   useEffect(() => {
     if (selectedUser) {
       dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "ASC" }));
+      // dispatch(fetchUserTrade({ userId: 1, order: "ASC" }));
     }
   }, [dispatch, selectedUser]);
 
   // Filter users by role = party
-  const partyUsers = useMemo(
-    () => users?.users?.filter((u) => u.role === "party") || [],
-    [users]
-  );
+  // const partyUsers = useMemo(
+  //   () => users?.users?.filter((u) => u.role === "party") || [],
+  //   [users]
+  // );
+  const partyUsers = party?.users
 
   // Build ledger entries
+  // const ledgerData = useMemo(() => {
+  //   if (!trades || !selectedUser) return [];
+
+  //   let balance = selectedUser.balance;
+  //   const entries = [
+  //     {
+  //       date: new Date(selectedUser.createdAt).toLocaleString(),
+  //       particulars: "Opening Balance",
+  //       rate: 0,
+  //       quantity: 0,
+  //       debit: 0,
+  //       credit: 0,
+  //       balance: selectedUser.balance,
+  //     },
+  //   ];
+  //   trades.forEach((trade) => {
+  //     const date = new Date(trade.createdAt);
+  //     const commodity = trade.commodity.value;
+
+  //     let debit = 0,
+  //       credit = 0,
+  //       particulars = "",
+  //       rate = 0,
+  //       quantity = 0;
+
+  //     if (trade.fromId.value === selectedUser.username ) {
+  //       rate = trade.fromRate.value;
+  //       quantity = trade.fromQuantity.value;
+  //       debit = trade.fromTotal.value || quantity * rate;
+  //       particulars = `${trade.toId.value} (${commodity})`;
+  //     } else if (trade.toId.value === selectedUser.username) {
+  //       rate = trade.toRate.value;
+  //       quantity = trade.toQuantity.value;
+  //       credit = trade.toTotal.value || quantity * rate;
+  //       particulars = `${trade.fromId.value} (${commodity})`;
+  //     }
+
+  //     // Skip empty trades
+  //     if (!(debit || credit || quantity || rate)) return;
+
+  //     balance += credit - debit;
+  //     // balance += debit - credit;
+  //     entries.push({
+  //       date: date.toLocaleString(),
+  //       particulars,
+  //       rate,
+  //       quantity,
+  //       debit,
+  //       credit,
+  //       balance,
+  //     });
+  //   });
+
+  //   // Apply date filter
+  //   return entries.filter((e) => {
+  //     if (!dateRange.from && !dateRange.to) return true;
+
+  //     // Parse "DD/MM/YYYY, HH:mm:ss"
+  //     const [datePart] = e.date.split(", ");
+  //     const [day, month, year] = datePart.split("/").map(Number);
+  //     const entryDate = new Date(year, month - 1, day);
+
+  //     const from = dateRange.from ? new Date(dateRange.from) : new Date(0);
+  //     const to = dateRange.to ? new Date(dateRange.to) : new Date();
+
+  //     // Normalize all to midnight (ignore time)
+  //     entryDate.setHours(0, 0, 0, 0);
+  //     from.setHours(0, 0, 0, 0);
+  //     to.setHours(0, 0, 0, 0);
+
+  //     return entryDate >= from && entryDate <= to;
+  //   });
+  // }, [trades, selectedUser, dateRange]);
+
   const ledgerData = useMemo(() => {
     if (!trades || !selectedUser) return [];
 
     let balance = selectedUser.balance;
+
     const entries = [
       {
         date: new Date(selectedUser.createdAt).toLocaleString(),
@@ -65,6 +146,9 @@ const LedgerPage = () => {
       },
     ];
 
+    // ✅ Filter trades when selected user = MICHEAL
+   
+
     trades.forEach((trade) => {
       const date = new Date(trade.createdAt);
       const commodity = trade.commodity.value;
@@ -75,23 +159,27 @@ const LedgerPage = () => {
         rate = 0,
         quantity = 0;
 
-      if (trade.fromId.value === selectedUser.username) {
-        rate = trade.fromRate.value;
-        quantity = trade.fromQuantity.value;
-        debit = trade.fromTotal.value || quantity * rate;
-        particulars = `${trade.toId.value} (${commodity})`;
-      } else if (trade.toId.value === selectedUser.username) {
-        rate = trade.toRate.value;
-        quantity = trade.toQuantity.value;
-        credit = trade.toTotal.value || quantity * rate;
-        particulars = `${trade.fromId.value} (${commodity})`;
-      }
+      
+        if (trade.fromId.value === selectedUser.username) {
+          rate = Number(trade.fromRate.value);
+          quantity = Number(trade.fromQuantity.value);
+          debit = Number(trade.fromTotal.value);
+          particulars = `${trade.toId.value} (${commodity})`;
+        }
 
-      // Skip empty trades
-      if (!(debit || credit || quantity || rate)) return;
+        if (trade.toId.value === selectedUser.username) {
+          rate = Number(trade.toRate.value);
+          quantity = Number(trade.toQuantity.value);
+          credit = Number(trade.toTotal.value);
+          particulars = `${trade.fromId.value} (${commodity})`;
+        }
 
+      // Skip empty
+      if (!(debit || credit)) return;
+
+      // ✅ Update running balance correctly
       balance += credit - debit;
-      // balance += debit - credit;
+
       entries.push({
         date: date.toLocaleString(),
         particulars,
@@ -103,11 +191,10 @@ const LedgerPage = () => {
       });
     });
 
-    // Apply date filter
+    // ✅ Date filter (unchanged)
     return entries.filter((e) => {
       if (!dateRange.from && !dateRange.to) return true;
 
-      // Parse "DD/MM/YYYY, HH:mm:ss"
       const [datePart] = e.date.split(", ");
       const [day, month, year] = datePart.split("/").map(Number);
       const entryDate = new Date(year, month - 1, day);
@@ -115,7 +202,6 @@ const LedgerPage = () => {
       const from = dateRange.from ? new Date(dateRange.from) : new Date(0);
       const to = dateRange.to ? new Date(dateRange.to) : new Date();
 
-      // Normalize all to midnight (ignore time)
       entryDate.setHours(0, 0, 0, 0);
       from.setHours(0, 0, 0, 0);
       to.setHours(0, 0, 0, 0);
@@ -123,13 +209,12 @@ const LedgerPage = () => {
       return entryDate >= from && entryDate <= to;
     });
   }, [trades, selectedUser, dateRange]);
+     
 
   // PDF Download
   const handleDownloadPDF = () => {
-    console.log("Generating PDF for", selectedUser, ledgerData);
     if (!ledgerData.length) return;
     const doc = new jsPDF();
-
     doc.setFontSize(16);
     doc.text(`Ledger Report - ${selectedUser.username}`, 14, 15);
     doc.setFontSize(10);
@@ -140,9 +225,10 @@ const LedgerPage = () => {
       ],
       body: ledgerData.map((entry, i) => [
         entry.date,
-        entry.i > 0
-          ? particulars.match(/\(([^)]+)\)/)?.[1] || ""
-          : entry.particulars,
+        // entry.i > 0
+        //   ? particulars.match(/\(([^)]+)\)/)?.[1] || ""
+        //   : entry.particulars,
+        i > 0 ? entry.particulars.match(/\(([^)]+)\)/)?.[1] || "" : entry.particulars,
         entry.quantity || "-",
         entry.rate || "-",
         entry.debit || "-",
@@ -163,8 +249,8 @@ const LedgerPage = () => {
       columnStyles: {
         0: { halign: "left", cellWidth: 30 }, // Date
         1: { halign: "left", cellWidth: 40 }, // Particulars
-        5: { textColor: [0, 150, 0] }, // Credit = Green
-        4: { textColor: [200, 0, 0] }, // Debit = Red
+        5: { textColor: [0, 0, 0] }, // Credit = Green
+        4: { textColor: [0, 0, 0] }, // Debit = Red
         6: { fontStyle: "bold" }, // Balance bold
       },
       didParseCell: function (data) {
@@ -172,15 +258,15 @@ const LedgerPage = () => {
         if (data.section === "body" && data.column.index === 6) {
           const value = parseFloat(data.cell.raw.toString().replace(/,/g, ""));
           if (!isNaN(value)) {
-            if (value > 0) data.cell.styles.textColor = [0, 150, 0]; // Green
-            else if (value < 0) data.cell.styles.textColor = [200, 0, 0]; // Red
+            if (value > 0) data.cell.styles.textColor = [0, 0, 0]; // Green
+            else if (value < 0) data.cell.styles.textColor = [0, 0, 0]; // Red
           }
           data.cell.styles.fontStyle = "bold";
         }
       },
     });
     const finalBalance = ledgerData.at(-1).balance;
-    const closingColor = finalBalance >= 0 ? [0, 150, 0] : [200, 0, 0];
+    const closingColor = finalBalance >= 0 ? [0, 0, 0] : [0, 0, 0];
     const finalY = doc.lastAutoTable.finalY + 10;
 
     doc.setFontSize(12);
@@ -195,6 +281,8 @@ const LedgerPage = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
+      <TradeHeader userProfile={userProfile} />
+      
       <div className="flex items-center justify-between mb-6">
         {/* Back Button */}
         <button
@@ -247,7 +335,7 @@ const LedgerPage = () => {
               }}
             >
               <option value="">-- Select Party --</option>
-              {partyUsers.map((user) => (
+              {partyUsers?.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.username}
                 </option>
@@ -386,24 +474,25 @@ const LedgerPage = () => {
                             {entry.rate || "-"}
                           </td>
 
-                         
-
                           {/* We Paid (Debit → Red) */}
                           <td
                             className={`py-2 px-4 text-right font-medium ${
                               entry.debit ? "text-grey-600" : "text-gray-600"
                             }`}
                           >
-                            {entry.debit ? formatNumberIndian(entry.debit) : "-"}
-                          {/* We Received (Credit → Green) */}
-
+                            {entry.debit
+                              ? formatNumberIndian(entry.debit)
+                              : "-"}
+                            {/* We Received (Credit → Green) */}
                           </td>
-                           <td
+                          <td
                             className={`py-2 px-4 text-right font-medium ${
                               entry.credit ? "text-grey-600" : "text-gray-600"
                             }`}
                           >
-                            {entry.credit ? formatNumberIndian(entry.credit) : "-"}
+                            {entry.credit
+                              ? formatNumberIndian(entry.credit)
+                              : "-"}
                           </td>
 
                           {/* Balance (Dynamic color + Opening balance always red) */}
@@ -428,7 +517,8 @@ const LedgerPage = () => {
               {/* Final Balance */}
               <div className="text-right mt-4 font-semibold text-gray-700">
                 Final Balance:{" "}
-                {selectedUser?.id == 24 && (
+                {/* {selectedUser?.id == 24 && ( */}
+                {selectedUser?.username == "Profit" && (
                   <span
                     className={`${
                       ledgerData.at(-1).balance >= 0
@@ -439,7 +529,8 @@ const LedgerPage = () => {
                     {formatNumberIndian(Math.abs(ledgerData.at(-1).balance))}
                   </span>
                 )}
-                {selectedUser?.id == 25 && (
+                {/* {selectedUser?.id == 25 && ( */}
+                {selectedUser?.username == "Loss" && (
                   <span
                     className={`${
                       ledgerData.at(-1).balance >= 0
@@ -450,7 +541,7 @@ const LedgerPage = () => {
                     -{formatNumberIndian(ledgerData.at(-1).balance)}
                   </span>
                 )}
-                {selectedUser?.id !== 25 && selectedUser?.id !== 24 && (
+                {selectedUser?.username !== "Loss" && selectedUser?.username !== "Profit" && (
                   <span
                     className={`${
                       ledgerData.at(-1).balance >= 0

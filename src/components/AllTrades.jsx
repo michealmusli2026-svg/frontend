@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllTrades } from "../redux/slice/trade";
 import { enumCall } from "../redux/slice/enums";
-import { fetchUser } from "../redux/slice/user"; // ✅ adjust to your actual user slice
+import { fetchParty, fetchUser, fetchUserTrade } from "../redux/slice/user"; // ✅ adjust to your actual user slice
 import * as XLSX from "xlsx";
 
 const AllTrades = () => {
@@ -11,8 +11,11 @@ const AllTrades = () => {
   const trades = useSelector((state) => state.trade?.list || []);
   const fetchEnum = useSelector((state) => state.enum?.data);
   const fetchUserData = useSelector((state) => state.user?.data);
+  const fetchPartyData = useSelector((state) => state.user?.party);
+  const getUserTrade = useSelector((state) => state.user?.trade);
 
   const users = useMemo(() => fetchUserData?.users || [], [fetchUserData]);
+  const party = useMemo(() => fetchPartyData?.users || [], [fetchPartyData]);
   const commodities = useMemo(() => fetchEnum?.commodities || [], [fetchEnum]);
 
   const [startDate, setStartDate] = useState("");
@@ -20,12 +23,15 @@ const AllTrades = () => {
   const [selectedCommodity, setSelectedCommodity] = useState("");
   const [selectedFrom, setSelectedFrom] = useState("");
   const [selectedTo, setSelectedTo] = useState("");
+  const userProfile = useMemo(() => JSON.parse(localStorage.getItem("userData")), []);
 
   // --- Fetch data ---
   useEffect(() => {
     dispatch(getAllTrades());
     dispatch(enumCall());
     dispatch(fetchUser()); // ✅ FIXED: replaced undefined fetchUser()
+    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" }));
+      dispatch(fetchParty({ userId: userProfile.user.id }));
   }, [dispatch]);
 
   // --- Filter logic ---
@@ -53,7 +59,7 @@ const AllTrades = () => {
   // }, [trades, startDate, endDate, selectedCommodity, selectedFrom, selectedTo]);
 
   const filteredTrades = useMemo(() => {
-  return trades?.filter((trade) => {
+  return getUserTrade?.filter((trade) => {
     if (!trade?.createdAt) return false;
 
     // Convert and normalize to date-only (ignore time)
@@ -88,7 +94,7 @@ const AllTrades = () => {
 
     return isAfterStart && isBeforeEnd && matchCommodity && matchFrom && matchTo;
   });
-}, [trades, startDate, endDate, selectedCommodity, selectedFrom, selectedTo]);
+}, [getUserTrade, startDate, endDate, selectedCommodity, selectedFrom, selectedTo]);
 
 
   // --- Download Excel ---
@@ -183,8 +189,14 @@ const AllTrades = () => {
             className="border rounded-md px-3 py-2 w-44"
           >
             <option value="">All</option>
-            {users
+            {/* {users
               ?.filter((user) => user.role !== "user")
+              .map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.username}
+                </option>
+              ))} */}
+                {party
               .map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.username}
@@ -203,11 +215,18 @@ const AllTrades = () => {
             className="border rounded-md px-3 py-2 w-44"
           >
             <option value="">All</option>
-            {users
+            {/* {users
               ?.filter(
                 (user) => user.id != selectedFrom && user.role !== "user"
               )
               .map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.username}
+                </option>
+              ))} */}
+              {party
+              
+              ?.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.username}
                 </option>
@@ -232,7 +251,7 @@ const AllTrades = () => {
           </thead>
           <tbody>
             {filteredTrades?.length > 0 ? (
-              filteredTrades.map((t) => (
+              filteredTrades?.map((t) => (
                 <>
                   <tr
                     key={t.tradeId}
@@ -275,7 +294,7 @@ const AllTrades = () => {
             <span className="text-gray-500">Net Profit:</span>{" "}
             {/* <span className="text-green-600 font-bold">₹ 15,150.00</span> */}
             <span className="text-green-600 font-bold">
-              ₹ {filteredTrades.reduce((acc, trade) => acc + (trade.profit?.value || 0), 0)}
+              ₹ {filteredTrades?.reduce((acc, trade) => acc + (trade.profit?.value || 0), 0)}
             </span>
           </p>
         </div>

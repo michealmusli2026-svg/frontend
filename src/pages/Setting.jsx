@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addCommodity, enumCall } from "../redux/slice/enums";
-import { createCustomer, createUser, fetchUser } from "../redux/slice/user";
+import { createCustomer, createUser, fetchParty, fetchUser } from "../redux/slice/user";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import AllTrades from "../components/AllTrades";
 import { useNavigate } from "react-router-dom";
 import UserManagement from "../components/UserManagement";
 import Snackbar from "../components/Snackbar";
+import TradeHeader from "../components/TradeHeader";
 
 const Setting = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("users");
+  const userProfile = useMemo(() => JSON.parse(localStorage.getItem("userData")), []);
   const [formData, setFormData] = useState({
     username: "",
     Ref: "",
@@ -20,7 +22,7 @@ const Setting = () => {
     altMobile: "",
     whatApp: "",
     role: 3,
-    openingBalance: 0,
+    openingBalance: "",
     currencyFormat: null,
     commoditiesHolding: [{ commoditiesId: null, quantity: null }],
   });
@@ -35,15 +37,16 @@ const Setting = () => {
 
   const enumData = useSelector((state) => state.enum?.data);
   const userData = useSelector((state) => state.user?.data);
+  const partyData = useSelector((state) => state.user?.party);
   useEffect(() => {
     dispatch(enumCall());
     dispatch(fetchUser());
+    dispatch(fetchParty({ userId: userProfile.user.id }));
   }, [dispatch]);
 
   // ========== Form Handlers ==========
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(name, ":", value);
     if (
       name == "openingBalance" ||
       name == "role" ||
@@ -83,9 +86,9 @@ const Setting = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.role === 3) {
+      formData["underUser"] = userProfile.user.id
       dispatch(createCustomer(formData))
         .then((res) => {
-          console.log("User Submitted:", res?.meta?.requestStatus);
           if (res?.meta?.requestStatus == "fulfilled") {
             setSnackbar({
               visible: true,
@@ -93,6 +96,8 @@ const Setting = () => {
               message: "User Created successfully!",
             });
             dispatch(fetchUser());
+    dispatch(fetchParty({ userId: userProfile.user.id }));
+
           } else {
             setSnackbar({
               visible: true,
@@ -105,9 +110,10 @@ const Setting = () => {
     } else {
       dispatch(createUser(formData))
         .then((res) => {
-          console.log("Customer Created:", res);
           if (res?.meta?.requestStatus == "fullfilled") {
             dispatch(fetchUser());
+    dispatch(fetchParty({ userId: userProfile.user.id }));
+
           }
         })
         .catch((err) => console.log("Error Creating User:", err));
@@ -140,6 +146,7 @@ const Setting = () => {
   return (
     <div className="p-6">
       {/* ===== Navbar ===== */}
+      <TradeHeader userProfile={userProfile} />
 
       <div className="flex item-center justify-around space-x-6 border-b border-gray-300 mb-6">
         <button onClick={() => navigate("/trade")}>Back</button>
@@ -379,7 +386,8 @@ const Setting = () => {
           handleAddHolding={handleAddHolding}
           handleHoldingChange={handleHoldingChange}
           handleRemoveHolding={handleRemoveHolding}
-          userData={userData}
+          // userData={userData}
+          userData={partyData}
         />
       )}
 

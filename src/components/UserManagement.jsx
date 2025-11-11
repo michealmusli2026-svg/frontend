@@ -257,7 +257,7 @@ const UserManagement = ({
               <th className="p-2 border">Alt Mobile No.</th>
               <th className="p-2 border">WhatApp No.</th>
               <th className="p-2 border">Balance</th>
-              <th className="p-2 border">Role</th>
+              {/* <th className="p-2 border">Role</th> */}
               {/* <th className="p-2 border">Holdings</th> */}
             </tr>
           </thead>
@@ -273,7 +273,7 @@ const UserManagement = ({
                   <td className="p-2 border">{user.altMobile}</td>
                   <td className="p-2 border">{user.whatApp}</td>
                   <td className="p-2 border">{user.balance}</td>
-                  <td className="p-2 border">{user.role}</td>
+                  {/* <td className="p-2 border">{user.role}</td> */}
                   {/* <td className="p-2 border">
                     {user.holdings?.length
                       ? user.holdings

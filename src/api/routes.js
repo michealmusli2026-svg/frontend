@@ -1,7 +1,9 @@
-const baseURL = "http://localhost:3000/api"
-export const loginRoute = `${baseURL}/user/login`
-export const getUserRoute = `${baseURL}/user`
-export const getBalancesRoute = `${baseURL}/user/balances`
+const baseURL = "http://13.232.164.240:3000/api"
+// const baseURL = "http://localhost:3000/api"
+export const loginRoute = `${baseURL}/users/login`
+// export const getUserRoute = `${baseURL}/users`
+export const getUserRoute = `${baseURL}/users`
+export const getBalancesRoute = `${baseURL}/users/balances`
 export const executeTradesRoute = `${baseURL}/trades`
 export const saveTradeRoute = `${baseURL}/trades/save`
 export const getAllEnums = `${baseURL}/enums`

@@ -67,7 +67,7 @@ export const createCustomer = createAsyncThunk(
   "user/createCustomer",
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${getUserRoute}/createCustomer`, userData)
+      const response = await axios.post(`${getUserRoute}/create/party`, userData)
       return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -75,9 +75,21 @@ export const createCustomer = createAsyncThunk(
   }
 )
 
+export const fetchParty = createAsyncThunk(
+  "user/fetchParty",
+  async ({userId}, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${getUserRoute}/party/${userId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data);
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: "user",
-  initialState: { createUser: null, createCustomer: null, data: null, error: null, balance: null, trade: null, holdings: null },
+  initialState: { createUser: null, createCustomer: null, data: null, error: null, balance: null, trade: null, holdings: null , party:null },
   reducers: {},
   extraReducers: (builder) => {
     builder
@@ -127,6 +139,14 @@ const userSlice = createSlice({
       })
       .addCase(fetchUserHoldings.rejected, (state, action) => {
         state.holdings = null;
+        state.error = action.payload;
+      })
+       .addCase(fetchParty.fulfilled, (state, action) => {
+        state.party = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchParty.rejected, (state, action) => {
+        state.party = null;
         state.error = action.payload;
       });
   },

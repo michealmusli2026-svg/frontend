@@ -4,33 +4,37 @@ import {
   fetchUser,
   fetchUserTrade,
   fetchUserBalance,
+  fetchParty
 } from "../redux/slice/user";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { formatNumberIndian } from "../utils/numberForamt";
+import TradeHeader from "../components/TradeHeader";
 
 const BalanceSheet = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate()
   const users = useSelector((state) => state.user?.data);
+  const party = useSelector((state) => state.user?.party);
   const trades = useSelector((state) => state.user?.trade || []);
   const getCapital = useSelector((state) => state.user?.balance);
   const userProfile = useMemo(
     () => JSON.parse(localStorage.getItem("userData")),
     []
   );
-
+  // const pageName = window.location.pathname.split("/").at(-1);
   useEffect(() => {
     dispatch(fetchUser());
+    dispatch(fetchParty({ userId: userProfile.user.id }));
     dispatch(fetchUserBalance(userProfile.user.id));
     dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "ASC" }));
   }, []);
 
-  const partyUsers = useMemo(
-    () => users?.users?.filter((u) => u.role === "party") || [],
-    [users]
-  );
-
+  // const partyUsers = useMemo(
+  //   () => users?.users?.filter((u) => u.role === "party") || [],
+  //   [users]
+  // );
+  const partyUsers = party?.users
   const groupedData = useMemo(() => {
       const dailyPL = {};
       let PLprofit = 0;
@@ -46,11 +50,10 @@ const BalanceSheet = () => {
         "Total Loss": 0,
       };
     }
-        //   console.log("trade",trade)
         const from = trade.fromId.value;
-        const fromQuantity = trade.fromQuantity.value;
+        const fromQuantity = Number(trade.fromQuantity.value);
         const to = trade.toId.value;
-        const toQuantity = trade.toQuantity.value;
+        const toQuantity = Number(trade.toQuantity.value);
         const profit = trade.profit.value;
         if (from == "Services")  {
         dailyPL[date]["Total Services"] =
@@ -78,7 +81,7 @@ const BalanceSheet = () => {
     }, [trades]);
 
   function addOpeningBalance(users, balances) {
-    return users.map((user) => {
+    return users?.map((user) => {
       const name = user.username;
       const balanceData = balances[name];
 
@@ -126,7 +129,6 @@ const BalanceSheet = () => {
       ledger[to].received += toTotal;
       // }
     });
-    // console.log("partyUsers", partyUsers);
     delete ledger["Expense"];
     delete ledger["Services"];
     delete ledger["Profit"];
@@ -140,6 +142,8 @@ const BalanceSheet = () => {
       {/* <h1 className="text-3xl font-extrabold mb-8 text-center text-gray-800 tracking-wide">
         Balance Sheet
       </h1> */}
+      <TradeHeader userProfile={userProfile} />
+      
       <div className="flex items-center justify-between mb-6">
               {/* Back Button */}
               <button
@@ -169,7 +173,7 @@ const BalanceSheet = () => {
               >
                 Asset (TO Receive){" "}
                 <span  className={`py-2 px-4 text-right font-bold ${
-                balances.reduce(
+                balances?.reduce(
                   (sum, entry) => sum + entry.updatedBalance,
                   0
                 ) >= 0
@@ -177,7 +181,7 @@ const BalanceSheet = () => {
                   : "text-red-600"
               }`}>
                 {formatNumberIndian( balances
-                  .reduce((sum, entry) => sum + entry.updatedBalance, 0)
+                  ?.reduce((sum, entry) => sum + entry.updatedBalance, 0)
                   .toFixed(2))}
                 {/* All Leadger Total */}
                   </span>
@@ -242,7 +246,7 @@ const BalanceSheet = () => {
           <tbody>
             <tr class="hover:bg-gray-50">
               <td class="py-2 px-3 border border-gray-300 text-center text-green-600 font-semibold">
-                {balances.map((entry,i) => (
+                {balances?.map((entry,i) => (
             <tr
               key={entry.name}
               className=" hover:bg-gray-50 transition duration-150"
@@ -256,7 +260,7 @@ const BalanceSheet = () => {
               </td>
               <td class="py-2 px-3 border border-gray-300 text-center text-green-600 font-semibold">
                 {/* All Ledger */}
-                 {balances.map((entry) => (
+                 {balances?.map((entry) => (
             <tr
               key={entry.name}
               className=" hover:bg-gray-50 transition duration-150"
@@ -277,7 +281,7 @@ const BalanceSheet = () => {
 
               <td class="py-2 px-3 border border-gray-300 text-center text-green-600 font-semibold">
                 {/* ₹5,000 */}
-                {balances.map((entry) => (
+                {balances?.map((entry) => (
             <tr
               key={entry.name}
               className="hover:bg-gray-50 transition duration-150"
@@ -361,7 +365,7 @@ const BalanceSheet = () => {
               <td class="py-2 px-3 border border-gray-300 text-center text-green-600 font-semibold">
                 {/* ₹5,000 */}
                 {formatNumberIndian(balances
-                  .reduce((sum, entry) => sum + entry.updatedBalance, 0)
+                  ?.reduce((sum, entry) => sum + entry.updatedBalance, 0)
                   .toFixed(2))}
               </td>
               <td class="py-2 px-3 border border-gray-300 text-center text-green-600 font-semibold">
@@ -429,7 +433,7 @@ const BalanceSheet = () => {
               <span className="text-green-600 font-bold">
                 ₹
                 {formatNumberIndian(balances
-                  .reduce((sum, entry) => sum + entry.updatedBalance, 0)
+                  ?.reduce((sum, entry) => sum + entry.updatedBalance, 0)
                   .toFixed(2) -
                   (
                     (getCapital?.balance || 0) +

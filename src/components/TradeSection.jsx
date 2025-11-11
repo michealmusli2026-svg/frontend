@@ -159,17 +159,17 @@ const TradeSection = ({
                 </label>
                 <select
                   className="border p-2 rounded-md focus:ring-2 focus:ring-blue-400 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed"
-                  value={trade.fromId}
+                  // value={trade.fromId}
+                  value={JSON.stringify(trade.fromId)}
                   onChange={(e) =>
-                    handleChange(index, "fromId", e.target.value)
-                  }
+                    handleChange(index, "fromId", e.target.value)}
                   disabled={trade.commoditiesId === ""}
                 >
                   <option value="">From</option>
                   {users
                     ?.filter((user) => user.role !== "user") // exclude role "user"
                     .map((user) => (
-                      <option key={user.id} value={user.id}>
+                      <option key={user.id} value={JSON.stringify({id:user.id,name:user.username})}>
                         {user.username}
                       </option>
                     ))}
@@ -193,7 +193,7 @@ const TradeSection = ({
                       onChange={(e) =>
                         handleChange(index, "fromQuantity", e.target.value)
                       }
-                      disabled={trade.fromId == ""}
+                      disabled={trade.fromId.id == ""}
                     />
                   </div>
                 </>
@@ -214,7 +214,7 @@ const TradeSection = ({
                       onChange={(e) =>
                         handleChange(index, "fromQuantity", e.target.value)
                       }
-                      disabled={trade.fromId == ""}
+                      disabled={trade.fromId.id == ""}
                     />
                   </div>
                   {/* RATE */}
@@ -237,7 +237,6 @@ const TradeSection = ({
                   </div>
                 </>
               )}
-
               {/* SELL PARTY */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-1">
@@ -245,7 +244,8 @@ const TradeSection = ({
                 </label>
                 <select
                   className="border p-2 rounded-md focus:ring-2 focus:ring-blue-400 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed"
-                  value={trade.toId}
+                  // value={trade.toId.name}
+                  value={JSON.stringify(trade.toId)}
                   onChange={(e) => handleChange(index, "toId", e.target.value)}
                   // disabled={trade.fromQuantity == "" || trade.fromRate == "" }
                   disabled={
@@ -259,7 +259,7 @@ const TradeSection = ({
                       (user) => user.id != trade.fromId && user.role !== "user"
                     )
                     .map((user) => (
-                      <option key={user.id} value={user.id}>
+                      <option key={user.id} value={JSON.stringify({id:user.id,name:user.username})}>
                         {user.username}
                       </option>
                     ))}
@@ -284,7 +284,7 @@ const TradeSection = ({
                       onChange={(e) =>
                         handleChange(index, "toQuantity", e.target.value)
                       }
-                      disabled={trade.toId == ""}
+                      disabled={trade.toId.id == ""}
                     />
                   </div>
                 </>

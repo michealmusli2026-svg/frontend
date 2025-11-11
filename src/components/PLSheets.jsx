@@ -4,22 +4,30 @@ import { getAllTrades } from "../redux/slice/trade";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { formatNumberIndian } from "../utils/numberForamt";
+import { fetchUserTrade } from "../redux/slice/user";
+import TradeHeader from "../components/TradeHeader";
 
 const PLSheet = () => {
  
   const dispatch = useDispatch();
   const navigate = useNavigate()
   const trades = useSelector((state) => state.trade?.list || []);
-
+  const getUserTrade = useSelector((state) => state.user?.trade);
+ const userProfile = useMemo(
+    () => JSON.parse(localStorage.getItem("userData")),
+    []
+  );
   useEffect(() => {
     dispatch(getAllTrades());
+    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" }));
+    
   }, [dispatch]);
 
   const groupedData = useMemo(() => {
     const dailyPL = {};
     let PLprofit = 0;
     let PLexpense = 0;
-    trades.forEach((trade) => {
+    getUserTrade?.forEach((trade) => {
       const date = new Date(trade.createdAt).toLocaleDateString("en-GB"); // DD/MM/YYYY
 
       // if (!dailyPL[date]) {
@@ -33,11 +41,10 @@ const PLSheet = () => {
           "Total Loss": 0,
         };
       }
-      //   console.log("trade",trade)
       const from = trade.fromId.value;
-      const fromQuantity = trade.fromQuantity.value;
+      const fromQuantity = Number(trade.fromQuantity.value);
       const to = trade.toId.value;
-      const toQuantity = trade.toQuantity.value;
+      const toQuantity = Number(trade.toQuantity.value);
       const profit = trade.profit.value;
       if (from == "Services") {
         dailyPL[date]["Total Services"] =
@@ -59,19 +66,21 @@ const PLSheet = () => {
         dailyPL[date]["Total Loss"] =
           (dailyPL[date]["Total Loss"] || 0) + toQuantity;
       }
+      
       dailyPL[date]["Total Profit"] =
         (dailyPL[date]["Total Profit"] || 0) + profit;
 
     });
-    console.log("dailyPL", dailyPL);
     return dailyPL;
-  }, [trades]);
+  }, [getUserTrade]);
 
   return (
     <div className="max-w-6xl mx-auto p-8 bg-white min-h-screen shadow-lg rounded-2xl">
       {/* <h1 className="text-3xl font-extrabold mb-8 text-center text-gray-800 tracking-wide">
         Daily Profit & Loss Sheet
       </h1> */}
+      <TradeHeader userProfile={userProfile} />
+
 <div className="flex items-center justify-between mb-6">
         {/* Back Button */}
         <button

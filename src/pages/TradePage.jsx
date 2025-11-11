@@ -7,6 +7,7 @@ import {
   fetchUserBalance,
   fetchUserTrade,
   fetchUserHoldings,
+  fetchParty,
 } from "../redux/slice/user";
 import { getAllTrades, saveTrade } from "../redux/slice/trade";
 import TradeTable from "../components/TradeTable";
@@ -20,14 +21,16 @@ const TradePage = () => {
   const navigate = useNavigate();
   const [trades, setTrades] = useState([
     {
-      fromId: "",
-      toId: "",
+      // fromId: "",
+      fromId: {id:"",name:""},
+      // toId: "",
+      toId: {id:"",name:""},
       commoditiesId: "",
       fromQuantity: "",
       fromRate: "",
       toRate: "",
       toQuantity: "",
-      note :""
+      note: "",
     },
   ]);
   const [snackbar, setSnackbar] = useState({
@@ -38,6 +41,7 @@ const TradePage = () => {
 
   const fetchEnum = useSelector((state) => state.enum?.data);
   const fetchUserData = useSelector((state) => state.user?.data);
+  const fetchPartyData = useSelector((state) => state.user?.party);
   const getBalance = useSelector((state) => state.user?.balance);
   const getTrade = useSelector((state) => state.trade?.list);
   const getUserTrade = useSelector((state) => state.user?.trade);
@@ -47,15 +51,14 @@ const TradePage = () => {
     () => JSON.parse(localStorage.getItem("userData")),
     []
   );
-    const getCapital = useSelector((state) => state.user?.balance);
-  
-
+  const getCapital = useSelector((state) => state.user?.balance);
   // === INITIAL DATA FETCH ===
   useEffect(() => {
     if (!userProfile?.user?.id) return;
     dispatch(enumCall());
     dispatch(fetchUser());
     // dispatch(getAllTrades());
+    dispatch(fetchParty({ userId: userProfile.user.id }));
     dispatch(fetchUserBalance(userProfile.user.id));
     dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" }));
     dispatch(fetchUserHoldings(userProfile.user.id));
@@ -74,6 +77,13 @@ const TradePage = () => {
     setTrades((prev) => {
       const updated = [...prev];
       updated[index][field] = value;
+      if(field == "fromId" || field == "toId"){
+        updated[index][field] = JSON.parse(value)
+      }
+      // if(field === "from" || field === "to"){
+      //   updated[index][field][id]=value
+      //   updated[index][field][value]=field
+      // }
       if (field === "fromQuantity" && updated[index]["commoditiesId"] !== "6") {
         updated[index]["toQuantity"] = value;
       }
@@ -120,7 +130,7 @@ const TradePage = () => {
         toRate,
         fromQuantity,
         fromRate,
-        note
+        note,
       } = tradeToExecute;
       let fromProfit = 0;
       let fromPercentRemoved = 0;
@@ -128,7 +138,7 @@ const TradePage = () => {
       let toProfit = 0;
       let toPercentRemoved = 0;
       let toTotal = 0;
-      let totalProfit = 0
+      let totalProfit = 0;
       if (commoditiesId == "4") {
         let fromConvertedRate = fromRate / 1000;
         fromPercentRemoved = (fromQuantity * fromConvertedRate) / 100;
@@ -139,36 +149,35 @@ const TradePage = () => {
         toPercentRemoved = (toQuantity * toConvertedRate) / 100;
         // toProfit = toQuantity - toPercentRemoved;
         toProfit = (-toRate * toQuantity) / 100000;
-        console.log(toProfit)
         toTotal = toQuantity - toProfit;
         /////
         // toQuantity = toTotal
-
       } else if (commoditiesId == "7") {
         fromTotal = fromQuantity;
         toTotal = toQuantity;
       } else if (commoditiesId == "6") {
         fromTotal = fromQuantity;
         toTotal = toQuantity;
-      } else if(commoditiesId == "8"){
-        if(fromId == "24"){
+      } else if (commoditiesId == "8") {
+        // if (fromId == "24") {
+        if (fromId.name == "Profit") {
           fromTotal = fromQuantity;
           toTotal = toQuantity;
           totalProfit = toTotal - 0;
         }
-        if(toId == "25"){
-           fromTotal = fromQuantity;
+        // if (toId == "25") {
+        if (toId.name == "Loss") {
+          fromTotal = fromQuantity;
           toTotal = toQuantity;
         }
-      }
-      else {
+      } else {
         fromTotal =
           fromQuantity && fromRate
             ? Number(fromQuantity) * Number(fromRate)
             : 0;
         toTotal =
           toQuantity && toRate ? Number(toQuantity) * Number(toRate) : 0;
-      } 
+      }
 
       // ✅ Simple validation
       // if (!fromId || !toId || !commoditiesId || !toQuantity || !toRate || !fromQuantity || !fromRate) {
@@ -181,18 +190,18 @@ const TradePage = () => {
         ...tradeToExecute,
         note: note || "No Remark",
         paymentStatus: 2,
-        fromRate:parseFloat(fromRate ? fromRate : 0),
-        toRate:parseFloat(toRate ? toRate : 0),
+        fromRate: parseFloat(fromRate ? fromRate : 0),
+        toRate: parseFloat(toRate ? toRate : 0),
         initiatorId: userProfile.user.id,
-        fromTotal:parseFloat(fromTotal),
-        toTotal:parseFloat(toTotal),
+        fromTotal: parseFloat(fromTotal),
+        toTotal: parseFloat(toTotal),
         toQuantity,
         fromQuantity,
-        fromId,
-        toId,
-        profit: totalProfit > 0 ? totalProfit : Number(toTotal) - Number(fromTotal),
+        fromId:fromId.id,
+        toId:toId.id,
+        profit:
+          totalProfit > 0 ? totalProfit : Number(toTotal) - Number(fromTotal),
       };
-        console.log(">",finalTrade)
       dispatch(saveTrade(finalTrade))
         .then((res) => {
           if (res.meta.requestStatus === "fulfilled") {
@@ -217,7 +226,7 @@ const TradePage = () => {
               fromRate: "",
               toRate: "",
               toQuantity: "",
-              note:""
+              note: "",
             },
           ]);
           dispatch(
@@ -240,7 +249,7 @@ const TradePage = () => {
           fromRate: "",
           toRate: "",
           toQuantity: "",
-          note:""
+          note: "",
         },
       ]);
       dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" }));
@@ -259,22 +268,22 @@ const TradePage = () => {
   );
   const commodities = useMemo(() => fetchEnum?.commodities || [], [fetchEnum]);
   const users = useMemo(() => fetchUserData?.users || [], [fetchUserData]);
-
+  const party = useMemo(() => fetchPartyData?.users || [], [fetchPartyData]);
 
   ////
-    // const partyUsers = useMemo(
-    //   () => users?.users?.filter((u) => u.role === "party") || [],
-    //   [users]
-    // );
-  
-    const groupedData = useMemo(() => {
-        const dailyPL = {};
-        let PLprofit = 0;
-        let PLexpense = 0;
-        getUserTrade?.forEach((trade) => {
-          const date = new Date(trade.createdAt).toLocaleDateString("en-GB"); // DD/MM/YYYY
-    
-          if (!dailyPL[date]) {
+  // const partyUsers = useMemo(
+  //   () => users?.users?.filter((u) => u.role === "party") || [],
+  //   [users]
+  // );
+
+  const groupedData = useMemo(() => {
+    const dailyPL = {};
+    let PLprofit = 0;
+    let PLexpense = 0;
+    getUserTrade?.forEach((trade) => {
+      const date = new Date(trade.createdAt).toLocaleDateString("en-GB"); // DD/MM/YYYY
+
+      if (!dailyPL[date]) {
         dailyPL[date] = {
           "Total Profit": 0,
           "Total Expense": 0,
@@ -282,47 +291,50 @@ const TradePage = () => {
           "Total Loss": 0,
         };
       }
-          const from = trade.fromId.value;
-          const fromQuantity = trade.fromQuantity.value;
-          const to = trade.toId.value;
-          const toQuantity = trade.toQuantity.value;
-          const profit = trade.profit.value;
-          if (from == "Services")  {
-          dailyPL[date]["Total Services"] =
-            (dailyPL[date]["Total Services"] || 0) - fromQuantity;
-            // Math.abs((dailyPL[date]["Total Services"] || 0) - fromQuantity);
-        }
-        if (to == "Services")  {
-          dailyPL[date]["Total Services"] =
-            (dailyPL[date]["Total Services"] || 0) + toQuantity;
-        }
-          if (from == "Expense") {
-            dailyPL[date]["Total Expense"] = (dailyPL[date]["Total Expense"] || 0) + fromQuantity;
-          } 
-          if (to == "Expense") {
-          dailyPL[date]["Total Expense"] = (dailyPL[date]["Total Expense"] || 0) + toQuantity;
-        } 
-         if(to == "Loss"){
-          dailyPL[date]["Total Loss"] =
-            (dailyPL[date]["Total Loss"] || 0) + toQuantity;
-        }
-          dailyPL[date]["Total Profit"] =
-            (dailyPL[date]["Total Profit"] || 0) + profit;
-        });
-        return dailyPL;
-      }, [getUserTrade]);
-  
-    function addOpeningBalance(users, balances) {
-      return users?.map((user) => {
+      const from = trade.fromId.value;
+      const fromQuantity = trade.fromQuantity.value;
+      const to = trade.toId.value;
+      const toQuantity = trade.toQuantity.value;
+      const profit = trade.profit.value;
+      if (from == "Services") {
+        dailyPL[date]["Total Services"] =
+          (dailyPL[date]["Total Services"] || 0) - fromQuantity;
+        // Math.abs((dailyPL[date]["Total Services"] || 0) - fromQuantity);
+      }
+      if (to == "Services") {
+        dailyPL[date]["Total Services"] =
+          (dailyPL[date]["Total Services"] || 0) + toQuantity;
+      }
+      if (from == "Expense") {
+        dailyPL[date]["Total Expense"] =
+          (dailyPL[date]["Total Expense"] || 0) + fromQuantity;
+      }
+      if (to == "Expense") {
+        dailyPL[date]["Total Expense"] =
+          (dailyPL[date]["Total Expense"] || 0) + toQuantity;
+      }
+      if (to == "Loss") {
+        dailyPL[date]["Total Loss"] =
+          (dailyPL[date]["Total Loss"] || 0) + toQuantity;
+      }
+      dailyPL[date]["Total Profit"] =
+        (dailyPL[date]["Total Profit"] || 0) + profit;
+    });
+    return dailyPL;
+  }, [getUserTrade]);
+
+  function addOpeningBalance(users, balances) {
+    return users
+      ?.map((user) => {
         const name = user.username;
         const balanceData = balances[name];
-  
+
         if (balanceData) {
           const { received, paid } = balanceData;
-  
+
           // Compute opening balance
           //   const openingBalance = received - paid;
-  
+
           return {
             name,
             // received,
@@ -331,7 +343,7 @@ const TradePage = () => {
             updatedBalance: received - paid + user.balance,
           };
         }
-  
+
         // If no matching balance entry found
         return {
           name,
@@ -340,70 +352,73 @@ const TradePage = () => {
           //   openingBalance: 0,
           updatedBalance: user.balance || 0,
         };
-        
       })
       .filter((user) => user.updatedBalance !== 0);
-    }
+  }
 
-    const balances = useMemo(() => {
-      const ledger = {};
-      getUserTrade?.forEach((trade) => {
-        const from = trade.fromId.value;
-        const to = trade.toId.value;
-        const fromTotal = Number(trade.fromTotal.value);
-        const toTotal = Number(trade.toTotal.value);
-        // if(from !=="Expense" && from !=="Services" && to !=="Expense" && to !=="Services"){
-        // Initialize accounts if missing
-        if (!ledger[from]) ledger[from] = { received: 0, paid: 0 };
-        if (!ledger[to]) ledger[to] = { received: 0, paid: 0 };
-  
-        // Update totals
-        ledger[from].paid += fromTotal;
-        ledger[to].received += toTotal;
-        // }
-      });
-      delete ledger["Expense"];
-      delete ledger["Services"];
-      delete ledger["Profit"];
-      delete ledger["Loss"];
+  const balances = useMemo(() => {
+    const ledger = {};
+    getUserTrade?.forEach((trade) => {
+      const from = trade.fromId.value;
+      const to = trade.toId.value;
+      const fromTotal = Number(trade.fromTotal.value);
+      const toTotal = Number(trade.toTotal.value);
+      // if(from !=="Expense" && from !=="Services" && to !=="Expense" && to !=="Services"){
+      // Initialize accounts if missing
+      if (!ledger[from]) ledger[from] = { received: 0, paid: 0 };
+      if (!ledger[to]) ledger[to] = { received: 0, paid: 0 };
 
-      const partyUsers = fetchUserData?.users?.filter((u) => u.role === "party") 
-   
-      const openingBalance = addOpeningBalance(partyUsers, ledger);
-      return openingBalance;
-    }, [getUserTrade]);
+      // Update totals
+      ledger[from].paid += fromTotal;
+      ledger[to].received += toTotal;
+      // }
+    });
+    delete ledger["Expense"];
+    delete ledger["Services"];
+    delete ledger["Profit"];
+    delete ledger["Loss"];
+
+    // const partyUsers = fetchUserData?.users?.filter((u) => u.role === "party")
+    const partyUsers = fetchPartyData?.users;
+    const openingBalance = addOpeningBalance(partyUsers, ledger);
+    // return openingBalance == undefined ? [] : openingBalance;
+    return openingBalance ;
+  }, [getUserTrade]);
 
   return (
     <div className="p-1">
-      
       <TradeHeader userProfile={userProfile} />
-
       <TradeSection
         getBalance={getBalance}
         getUserHolding={getUserHolding}
         trades={trades}
         handleChange={handleChange}
-        users={users}
+        users={party}
         commodities={commodities}
         tradeNatures={tradeNatures}
         executeRow={executeRow}
         deleteRow={deleteRow}
         addRow={addRow}
-        balanceSheetDifference= {
-                  balances
-                  ?.reduce((sum, entry) => sum + entry.updatedBalance, 0)
-                  ?.toFixed(2) -
-                  (
-                    (getCapital?.balance || 0) +
-                    (Object.values(groupedData).reduce(
-                      (sum, val) => sum + (val["Total Profit"] || 0),
-                      0
-                    ) -
-                      Object.values(groupedData).reduce(
-                        (sum, val) => sum + (val["Total Services"] || 0) + (val["Total Expense"]) +  + (val["Total Loss"] || 0),
-                        0
-                      ))
-                  ).toFixed(2)}
+        balanceSheetDifference={
+          balances
+            ?.reduce((sum, entry) => sum + entry.updatedBalance, 0)
+            ?.toFixed(2) -
+          (
+            (getCapital?.balance || 0) +
+            (Object.values(groupedData).reduce(
+              (sum, val) => sum + (val["Total Profit"] || 0),
+              0
+            ) -
+              Object.values(groupedData).reduce(
+                (sum, val) =>
+                  sum +
+                  (val["Total Services"] || 0) +
+                  val["Total Expense"] +
+                  +(val["Total Loss"] || 0),
+                0
+              ))
+          ).toFixed(2)
+        }
       />
 
       {/* TRADE HISTORY TABLE */}

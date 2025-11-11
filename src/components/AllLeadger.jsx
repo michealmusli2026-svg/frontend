@@ -1,24 +1,26 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUser, fetchUserTrade } from "../redux/slice/user";
+import { fetchParty, fetchUser, fetchUserTrade } from "../redux/slice/user";
 import { formatNumberIndian } from "../utils/numberForamt";
 
 const AllLedger = () => {
   const dispatch = useDispatch();
   const [selectedUser, setSelectedUser] = useState(null);
   const users = useSelector((state) => state.user?.data);
+  const party = useSelector((state) => state.user?.party);
   const trades = useSelector((state) => state.user?.trade);
   const userProfile = useMemo(() => JSON.parse(localStorage.getItem("userData")), []);
 
   useEffect(() => {
     dispatch(fetchUser());
+        dispatch(fetchParty({ userId: userProfile.user.id }));
     dispatch(fetchUserTrade({userId:userProfile.user.id,order:"ASC"}));
   }, []);
-  const partyUsers = useMemo(
-    () => users?.users?.filter((u) => u.role === "party") || [],
-    [users]
-  );
-
+  // const partyUsers = useMemo(
+  //   () => users?.users?.filter((u) => u.role === "party") || [],
+  //   [users]
+  // );
+  const partyUsers = party?.users
   // useEffect(() => {
   //   if (selectedUser) {
   //     dispatch(fetchUserTrade({userId:userProfile.user.id,order:"ASC"}));
@@ -93,7 +95,6 @@ const AllLedger = () => {
                     ))}
                 </select>
             </div> */}
-      {console.log("Balances to display:", balances)}
       <table className="min-w-full bg-white rounded-xl shadow-md overflow-hidden">
         <thead className="bg-gray-200 text-gray-700">
           <tr>
