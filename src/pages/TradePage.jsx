@@ -230,7 +230,7 @@ const TradePage = () => {
             },
           ]);
           dispatch(
-            fetchUserTrade({ userId: userProfile.user.id, order: "DESC" })
+            fetchUserTrade({ userId: userProfile.user.id, order: "DESC" , complete:null })
           );
         })
         .catch(() =>
@@ -252,7 +252,7 @@ const TradePage = () => {
           note: "",
         },
       ]);
-      dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" }));
+      dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC", complete:null  }));
     },
     [dispatch, trades, userProfile]
   );
