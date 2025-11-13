@@ -14,7 +14,7 @@ const AllLedger = () => {
   useEffect(() => {
     dispatch(fetchUser());
         dispatch(fetchParty({ userId: userProfile.user.id }));
-    dispatch(fetchUserTrade({userId:userProfile.user.id,order:"ASC"}));
+    dispatch(fetchUserTrade({userId:userProfile.user.id,order:"ASC",complete:true}));
   }, []);
   // const partyUsers = useMemo(
   //   () => users?.users?.filter((u) => u.role === "party") || [],

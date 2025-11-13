@@ -30,9 +30,9 @@ export const fetchUserBalance = createAsyncThunk(
 
 export const fetchUserTrade = createAsyncThunk(
   "user/fetchTrade",
-  async ({userId,order}, { rejectWithValue }) => {
+  async ({userId,order,complete}, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${getUserRoute}/trade/${userId}/${order}`);
+      const response = await axios.get(`${getUserRoute}/trade/${userId}/${order}/${complete}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -87,9 +87,20 @@ export const fetchParty = createAsyncThunk(
   }
 );
 
+export const updateUserTrade = createAsyncThunk(
+  "user/tradeUpdate",
+  async (tradeId, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${getUserRoute}/trade/update`, tradeId)
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error.response?.data);
+    }
+  }
+)
 const userSlice = createSlice({
   name: "user",
-  initialState: { createUser: null, createCustomer: null, data: null, error: null, balance: null, trade: null, holdings: null , party:null },
+  initialState: { createUser: null, createCustomer: null, data: null, error: null, balance: null, trade: null, holdings: null , party:null ,update:null},
   reducers: {},
   extraReducers: (builder) => {
     builder
@@ -147,6 +158,14 @@ const userSlice = createSlice({
       })
       .addCase(fetchParty.rejected, (state, action) => {
         state.party = null;
+        state.error = action.payload;
+      })
+       .addCase(updateUserTrade.fulfilled, (state, action) => {
+        state.update = action.payload;
+        state.error = null;
+      })
+      .addCase(updateUserTrade.rejected, (state, action) => {
+        state.update = null;
         state.error = action.payload;
       });
   },

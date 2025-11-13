@@ -30,7 +30,7 @@ const AllTrades = () => {
     dispatch(getAllTrades());
     dispatch(enumCall());
     dispatch(fetchUser()); // ✅ FIXED: replaced undefined fetchUser()
-    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" }));
+    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC",complete:true }));
       dispatch(fetchParty({ userId: userProfile.user.id }));
   }, [dispatch]);
 
@@ -85,7 +85,7 @@ const AllTrades = () => {
       : true;
 
     const matchFrom = selectedFrom
-      ? trade.fromId?.id === parseInt(selectedFrom)
+      ? trade.fromId?.id === parseInt(selectedFrom) 
       : true;
 
     const matchTo = selectedTo
@@ -96,6 +96,49 @@ const AllTrades = () => {
   });
 }, [getUserTrade, startDate, endDate, selectedCommodity, selectedFrom, selectedTo]);
 
+// const filteredTrades = useMemo(() => {
+//   if (!getUserTrade) return [];
+
+//   return getUserTrade.filter((trade) => {
+//     if (!trade?.createdAt) return false;
+
+//     // --- Normalize trade date ---
+//     const tradeDate = new Date(trade.createdAt);
+//     const tradeDateOnly = new Date(
+//       tradeDate.getFullYear(),
+//       tradeDate.getMonth(),
+//       tradeDate.getDate()
+//     );
+
+//     // --- Normalize filter dates ---
+//     const start = startDate
+//       ? new Date(new Date(startDate).setHours(0, 0, 0, 0))
+//       : null;
+//     const end = endDate
+//       ? new Date(new Date(endDate).setHours(23, 59, 59, 999))
+//       : null;
+
+//     // --- Date range filter ---
+//     const isAfterStart = start ? tradeDateOnly >= start : true;
+//     const isBeforeEnd = end ? tradeDateOnly <= end : true;
+
+//     // --- Commodity filter ---
+//     const matchCommodity = selectedCommodity
+//       ? trade.commodity?.value === selectedCommodity
+//       : true;
+
+//     // --- Party filter (checks fromId, toId, initiator) ---
+//     const selectedPartyId = selectedFrom ? parseInt(selectedFrom) : null;
+//     const matchParty = selectedPartyId
+//       ? trade.toId?.id === selectedPartyId 
+//         // trade.toId?.id === selectedPartyId 
+//         // trade.initiator?.id === selectedPartyId
+//       : true;
+
+//     // --- Final combined check ---
+//     return isAfterStart && isBeforeEnd && matchCommodity && matchParty;
+//   });
+// }, [getUserTrade, startDate, endDate, selectedCommodity, selectedFrom]);
 
   // --- Download Excel ---
   // const handleDownloadExcel = () => {
@@ -181,7 +224,7 @@ const AllTrades = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            From Party
+            Party
           </label>
           <select
             value={selectedFrom}
@@ -215,15 +258,6 @@ const AllTrades = () => {
             className="border rounded-md px-3 py-2 w-44"
           >
             <option value="">All</option>
-            {/* {users
-              ?.filter(
-                (user) => user.id != selectedFrom && user.role !== "user"
-              )
-              .map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.username}
-                </option>
-              ))} */}
               {party
               
               ?.map((user) => (

@@ -6,21 +6,27 @@ import { FaArrowLeft } from "react-icons/fa";
 import { formatNumberIndian } from "../utils/numberForamt";
 import { fetchUserTrade } from "../redux/slice/user";
 import TradeHeader from "../components/TradeHeader";
+import PartyPLSheet from "./PartyPLSheet";
 
 const PLSheet = () => {
- 
   const dispatch = useDispatch();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [isPartyView , setIsPartyView] = useState(false)
   const trades = useSelector((state) => state.trade?.list || []);
   const getUserTrade = useSelector((state) => state.user?.trade);
- const userProfile = useMemo(
+  const userProfile = useMemo(
     () => JSON.parse(localStorage.getItem("userData")),
     []
   );
   useEffect(() => {
     dispatch(getAllTrades());
-    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" }));
-    
+    dispatch(
+      fetchUserTrade({
+        userId: userProfile.user.id,
+        order: "DESC",
+        complete: true,
+      })
+    );
   }, [dispatch]);
 
   const groupedData = useMemo(() => {
@@ -62,14 +68,13 @@ const PLSheet = () => {
         dailyPL[date]["Total Expense"] =
           (dailyPL[date]["Total Expense"] || 0) + toQuantity;
       }
-      if(to == "Loss"){
+      if (to == "Loss") {
         dailyPL[date]["Total Loss"] =
           (dailyPL[date]["Total Loss"] || 0) + toQuantity;
       }
-      
+
       dailyPL[date]["Total Profit"] =
         (dailyPL[date]["Total Profit"] || 0) + profit;
-
     });
     return dailyPL;
   }, [getUserTrade]);
@@ -81,7 +86,26 @@ const PLSheet = () => {
       </h1> */}
       <TradeHeader userProfile={userProfile} />
 
-<div className="flex items-center justify-between mb-6">
+      {/* <div className="flex  justify-between mb-6">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium transition-all"
+        >
+          <FaArrowLeft className="text-lg" />
+          Back
+        </button>
+
+        <h1 className="text-2xl font-bold text-gray-800 absolute left-1/2 transform -translate-x-1/2">
+                  Daily Profit & Loss Sheet
+        </h1>
+        <h1 className="text-2xl font-bold text-gray-800 absolute left-1/2 transform -translate-x-1/2">
+                  Party Profit & Loss Sheet
+
+        </h1>
+
+        <div className="w-[60px]" />
+      </div> */}
+      <div className="flex justify-between items-center mb-6 relative">
         {/* Back Button */}
         <button
           onClick={() => navigate("/")}
@@ -91,14 +115,36 @@ const PLSheet = () => {
           Back
         </button>
 
-        {/* Centered Title */}
-        <h1 className="text-2xl font-bold text-gray-800 absolute left-1/2 transform -translate-x-1/2">
-                  Daily Profit & Loss Sheet
-        </h1>
+        {/* Centered Dual Headers */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-7">
+          <button
+            onClick={() => setIsPartyView(false)}
+            className={`text-xl font-bold transition-all ${
+              !isPartyView
+                ? "text-blue-600 underline underline-offset-4"
+                : "text-gray-800 hover:text-blue-600"
+            }`}
+          >
+            Daily Profit & Loss Sheet
+          </button>
 
-        {/* Spacer to balance layout */}
+          <button
+            onClick={() => setIsPartyView(true)}
+            className={`text-xl font-bold transition-all ${
+              isPartyView
+                ? "text-blue-600 underline underline-offset-4"
+                : "text-gray-800 hover:text-blue-600"
+            }`}
+          >
+            Party Profit & Loss Sheet
+          </button>
+        </div>
+
+        {/* Spacer for layout balance */}
         <div className="w-[60px]" />
       </div>
+      {!isPartyView ? 
+<>
       <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
         <table className="w-full text-sm text-left border-collapse">
           <thead className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
@@ -172,7 +218,7 @@ const PLSheet = () => {
                     : 0} */}
                     {values["Total Expense"]?.toFixed(2)}
                   </tr>
-                   <tr className="px-4 py-3 text-gray-700">
+                  <tr className="px-4 py-3 text-gray-700">
                     ₹{" "}
                     {/* {values["Total Expense"]?.toFixed(2) > 0
                     ? values["Total Expense"]?.toFixed(2)
@@ -192,13 +238,12 @@ const PLSheet = () => {
                     ? (values["Total Services"]) - (values["Total Expense"] +
                       values["Total Services"]).toFixed(2)
                     : values["Total Services"]?.toFixed(2)} */}
-
                   {formatNumberIndian(
-                    (values["Total Profit"] -
-                   ( (values["Total Services"] +
-                    values["Total Expense"]
-                    + values["Total Loss"]))))
-                  }
+                    values["Total Profit"] -
+                      (values["Total Services"] +
+                        values["Total Expense"] +
+                        values["Total Loss"])
+                  )}
                 </td>
               </tr>
             ))}
@@ -213,9 +258,11 @@ const PLSheet = () => {
               {Object.values(groupedData).length > 0 && (
                 <td className="px-4 py-3 text-green-600 border-t border-gray-200">
                   ₹{" "}
-                  {formatNumberIndian(Object.values(groupedData)
-                    .reduce((sum, val) => sum + (val["Total Profit"] || 0), 0)
-                    .toFixed(2))}
+                  {formatNumberIndian(
+                    Object.values(groupedData)
+                      .reduce((sum, val) => sum + (val["Total Profit"] || 0), 0)
+                      .toFixed(2)
+                  )}
                 </td>
               )}
               {/* <td className="px-4 py-3 text-green-600 border-t border-gray-200">
@@ -231,16 +278,18 @@ const PLSheet = () => {
               {Object.values(groupedData).length > 0 && (
                 <td className="px-4 py-3 text-red-600 border-t border-gray-200">
                   ₹{" "}
-                  {formatNumberIndian(Object.values(groupedData)
-                    .reduce(
-                      (sum, val) =>
-                        sum +
-                        (val["Total Services"] || 0) +
-                        val["Total Expense"] +
-                        val["Total Loss"],
-                      0
-                    )
-                    .toFixed(2))}
+                  {formatNumberIndian(
+                    Object.values(groupedData)
+                      .reduce(
+                        (sum, val) =>
+                          sum +
+                          (val["Total Services"] || 0) +
+                          val["Total Expense"] +
+                          val["Total Loss"],
+                        0
+                      )
+                      .toFixed(2)
+                  )}
                 </td>
               )}
               {/* <td className="px-4 py-3 text-red-600 border-t border-gray-200">
@@ -267,26 +316,36 @@ const PLSheet = () => {
                 //     .toFixed(2) >
                 // 0
                 formatNumberIndian(
-                (
-                  Object.values(groupedData)
-                    .reduce((sum, val) => sum + (val["Total Profit"] || 0), 0)
-                    .toFixed(2) -
-                  Object.values(groupedData)
-                    .reduce(
-                      (sum, val) =>
-                        sum +
-                        (val["Total Services"] || 0) +
-                        val["Total Expense"] + val["Total Loss"],
-                      0
-                    )
-                    .toFixed(2)
-                ).toFixed(2))
+                  (
+                    Object.values(groupedData)
+                      .reduce((sum, val) => sum + (val["Total Profit"] || 0), 0)
+                      .toFixed(2) -
+                    Object.values(groupedData)
+                      .reduce(
+                        (sum, val) =>
+                          sum +
+                          (val["Total Services"] || 0) +
+                          val["Total Expense"] +
+                          val["Total Loss"],
+                        0
+                      )
+                      .toFixed(2)
+                  ).toFixed(2)
+                )
                 // : 0
               }
             </span>
           </p>
         </div>
       </div>
+</>
+
+       :
+       <PartyPLSheet />
+       }
+
+
+
     </div>
   );
 };

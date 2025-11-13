@@ -10,16 +10,17 @@ import {
   FaTrashAlt,
   FaPlayCircle,
   FaExchangeAlt,
+  // FaCheckCircle
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { fetchUserTrade } from "../redux/slice/user";
+import { fetchUserTrade, updateUserTrade } from "../redux/slice/user";
 import Snackbar from "./Snackbar";
 import { formatNumberIndian } from "../utils/numberForamt";
 const TradeTable = ({ tradeList, handleLedger }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate;
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-   const [editingRow, setEditingRow] = useState(null);
+  const [editingRow, setEditingRow] = useState(null);
   const [noteValue, setNoteValue] = useState("");
   const [snackbar, setSnackbar] = useState({
     visible: false,
@@ -27,9 +28,9 @@ const TradeTable = ({ tradeList, handleLedger }) => {
     message: "",
   });
   const userProfile = useMemo(
-      () => JSON.parse(localStorage.getItem("userData")),
-      []
-    );
+    () => JSON.parse(localStorage.getItem("userData")),
+    []
+  );
 
   const sortedData =
     tradeList?.length > 0
@@ -88,7 +89,11 @@ const TradeTable = ({ tradeList, handleLedger }) => {
           });
         }
         dispatch(
-          fetchUserTrade({ userId: userProfile.user.id, order: "DESC" })
+          fetchUserTrade({
+            userId: userProfile.user.id,
+            order: "DESC",
+            complete: null,
+          })
         );
       })
       .catch(() =>
@@ -116,32 +121,35 @@ const TradeTable = ({ tradeList, handleLedger }) => {
     );
     if (confirmDelete) {
       dispatch(deleteTrade(id))
-      .then((res) => {
-        console.log(res)
-                if (res.meta.requestStatus === "fulfilled") {
-                  setSnackbar({
-                    visible: true,
-                    type: "success",
-                    message: "Trade Deleted successfully!",
-                  });
-                } else {
-                  setSnackbar({
-                    visible: true,
-                    type: "error",
-                    message: "Failed to delete trade.",
-                  });
-                }
-                dispatch(
-                  fetchUserTrade({ userId: userProfile.user.id, order: "DESC" })
-                );
-              })
-              .catch(() =>
-                setSnackbar({
-                  visible: true,
-                  type: "error",
-                  message: "An unexpected error occurred.",
-                })
-              );
+        .then((res) => {
+          if (res.meta.requestStatus === "fulfilled") {
+            setSnackbar({
+              visible: true,
+              type: "success",
+              message: "Trade Deleted successfully!",
+            });
+          } else {
+            setSnackbar({
+              visible: true,
+              type: "error",
+              message: "Failed to delete trade.",
+            });
+          }
+          dispatch(
+            fetchUserTrade({
+              userId: userProfile.user.id,
+              order: "DESC",
+              complete: null,
+            })
+          );
+        })
+        .catch(() =>
+          setSnackbar({
+            visible: true,
+            type: "error",
+            message: "An unexpected error occurred.",
+          })
+        );
     }
   };
 
@@ -149,43 +157,94 @@ const TradeTable = ({ tradeList, handleLedger }) => {
     setEditingRow(tradeId);
     setNoteValue(currentNote || "");
   };
-   const handleNoteSave = async (tradeId) => {
+  const handleNoteSave = async (tradeId) => {
     try {
       // Example: you can integrate this with your backend update API
       dispatch(updateTrade({ id: tradeId, note: noteValue }))
-      .then((res) => {
-                if (res.meta.requestStatus === "fulfilled") {
-                  setSnackbar({
-                    visible: true,
-                    type: "success",
-                    message: "Note updated successfully!",
-                  });
-                } else {
-                  setSnackbar({
-                    visible: true,
-                    type: "error",
-                    message: "Failed to execute trade.",
-                  });
-                }
-                dispatch(
-                  fetchUserTrade({ userId: userProfile.user.id, order: "DESC" })
-                );
-              })
-              .catch(() =>
-                setSnackbar({
-                  visible: true,
-                  type: "error",
-                  message: "An unexpected error occurred.",
-                })
-              );
+        .then((res) => {
+          if (res.meta.requestStatus === "fulfilled") {
+            setSnackbar({
+              visible: true,
+              type: "success",
+              message: "Note updated successfully!",
+            });
+          } else {
+            setSnackbar({
+              visible: true,
+              type: "error",
+              message: "Failed to execute trade.",
+            });
+          }
+          dispatch(
+            fetchUserTrade({
+              userId: userProfile.user.id,
+              order: "DESC",
+              complete: null,
+            })
+          );
+        })
+        .catch(() =>
+          setSnackbar({
+            visible: true,
+            type: "error",
+            message: "An unexpected error occurred.",
+          })
+        );
       // setSnackbar({ visible: true, type: "success", message: "Note updated successfully!" });
       setEditingRow(null);
-      dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" }));
+      dispatch(
+        fetchUserTrade({
+          userId: userProfile.user.id,
+          order: "DESC",
+          complete: null,
+        })
+      );
     } catch (err) {
-      setSnackbar({ visible: true, type: "error", message: "Failed to update note." });
+      setSnackbar({
+        visible: true,
+        type: "error",
+        message: "Failed to update note.",
+      });
     }
   };
 
+  const handleUpdateTrade = (id) => {
+    const confirmUpdate = window.confirm(
+      "Are you sure you want to Complete this trade?"
+    );
+    if (confirmUpdate) {
+      dispatch(updateUserTrade({ id: id }))
+        .then((res) => {
+          if (res.meta.requestStatus === "fulfilled") {
+            setSnackbar({
+              visible: true,
+              type: "success",
+              message: "Trade Updated successfully!",
+            });
+          } else {
+            setSnackbar({
+              visible: true,
+              type: "error",
+              message: "Failed to Update trade.",
+            });
+          }
+          dispatch(
+            fetchUserTrade({
+              userId: userProfile.user.id,
+              order: "DESC",
+              complete: null,
+            })
+          );
+        })
+        .catch(() =>
+          setSnackbar({
+            visible: true,
+            type: "error",
+            message: "An unexpected error occurred.",
+          })
+        );
+    }
+  };
   return (
     <div className="p-6 bg-white rounded-2xl shadow-md">
       {/* HEADER */}
@@ -239,7 +298,6 @@ const TradeTable = ({ tradeList, handleLedger }) => {
                   item.paymentStatus === "paid";
                 const isEditing = editingRow === item.tradeId;
 
-
                 return (
                   <React.Fragment key={index}>
                     <tr
@@ -266,9 +324,13 @@ const TradeTable = ({ tradeList, handleLedger }) => {
                       </td>
                       <td className="px-4 py-2">{item.fromQuantity.value}</td>
                       {/* <td className="px-4 py-2">{item.fromRate.value}</td> */}
-                      <td className="px-4 py-2">{formatNumberIndian(item.fromRate.value)}</td>
+                      <td className="px-4 py-2">
+                        {formatNumberIndian(item.fromRate.value)}
+                      </td>
                       {/* <td className="px-4 py-2">{item.fromTotal.value}</td> */}
-                      <td className="px-4 py-2">{formatNumberIndian(item.fromTotal.value)}</td>
+                      <td className="px-4 py-2">
+                        {formatNumberIndian(item.fromTotal.value)}
+                      </td>
 
                       {/* To Details */}
                       <td
@@ -279,15 +341,37 @@ const TradeTable = ({ tradeList, handleLedger }) => {
                       </td>
                       <td className="px-4 py-2">{item.toQuantity.value}</td>
                       <td className="px-4 py-2">{item.toRate.value}</td>
-                      <td className="px-4 py-2">{formatNumberIndian(item.toTotal.value)}</td>
+                      <td className="px-4 py-2">
+                        {formatNumberIndian(item.toTotal.value)}
+                      </td>
 
                       {/* Profit */}
-                      <td className="px-4 py-2">{formatNumberIndian(item.profit.value)}</td>
+                      <td className="px-4 py-2">
+                        {formatNumberIndian(item.profit.value)}
+                      </td>
 
                       {/* Action Buttons */}
                       <td className="px-4 py-2">
+                        {/* <div className="flex gap-2">
+                          {index === 0 || (item.commodity.value == "RMB" && item.initiator?.id == 36) && (
+                            <button
+                              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-white text-sm font-semibold shadow transition-all ${
+                                isPaid
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-red-500 hover:bg-red-600"
+                              }`}
+                              onClick={() => handleDeleteTrade(item.tradeId)}
+                              disabled={isPaid}
+                            >
+                              <FaTrashAlt />
+                              Cancel
+                            </button>
+                          )}
+                        </div> */}
                         <div className="flex gap-2">
-                          {index === 0 && (
+                          {(index === 0 ||
+                            (item.commodity.value === "RMB" &&
+                              item.initiator?.id === 36)) && (
                             <button
                               className={`flex items-center gap-1 px-3 py-1 rounded-lg text-white text-sm font-semibold shadow transition-all ${
                                 isPaid
@@ -301,6 +385,25 @@ const TradeTable = ({ tradeList, handleLedger }) => {
                               Delete
                             </button>
                           )}
+                        </div>
+                        <div className="flex gap-2 mt-1">
+                          {item.commodity.value == "RMB" &&
+                            item.initiator?.id == 36 && (
+                              <button
+                                className={`flex items-center gap-1 px-3 py-1 rounded-lg text-white text-sm font-semibold shadow transition-all ${
+                                  item.completed == 1
+                                    ? "bg-blue-700 cursor-not-allowed"
+                                    : "bg-blue-400 hover:bg-blue-600"
+                                }`}
+                                onClick={() => handleUpdateTrade(item.tradeId)}
+                                disabled={item.completed == 1}
+                              >
+                                <FaCheckCircle />
+                                {item.completed == 1
+                                  ? "Completed"
+                                  : "Complete"}
+                              </button>
+                            )}
                         </div>
                       </td>
                     </tr>
@@ -321,7 +424,10 @@ const TradeTable = ({ tradeList, handleLedger }) => {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } border-b`}
                     >
-                      <td colSpan="12" className="px-4 py-2 text-sm text-gray-700 italic">
+                      <td
+                        colSpan="12"
+                        className="px-4 py-2 text-sm text-gray-700 italic"
+                      >
                         📝 <span className="font-medium">Remark:</span>{" "}
                         {isEditing ? (
                           <>
@@ -349,7 +455,9 @@ const TradeTable = ({ tradeList, handleLedger }) => {
                           <>
                             {item.note?.trim() ? item.note : "No Remark added"}
                             <button
-                              onClick={() => handleNoteEdit(item.tradeId, item.note)}
+                              onClick={() =>
+                                handleNoteEdit(item.tradeId, item.note)
+                              }
                               className="ml-3 px-2 py-1 text-blue-600 text-xs font-medium underline"
                             >
                               Edit

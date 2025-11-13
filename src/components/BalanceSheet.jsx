@@ -27,7 +27,7 @@ const BalanceSheet = () => {
     dispatch(fetchUser());
     dispatch(fetchParty({ userId: userProfile.user.id }));
     dispatch(fetchUserBalance(userProfile.user.id));
-    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "ASC" }));
+    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "ASC" ,complete:true}));
   }, []);
 
   // const partyUsers = useMemo(

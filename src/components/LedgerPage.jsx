@@ -42,7 +42,7 @@ const LedgerPage = () => {
   // Fetch trades when user changes
   useEffect(() => {
     if (selectedUser) {
-      dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "ASC" }));
+      dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "ASC" ,complete:true}));
       // dispatch(fetchUserTrade({ userId: 1, order: "ASC" }));
     }
   }, [dispatch, selectedUser]);

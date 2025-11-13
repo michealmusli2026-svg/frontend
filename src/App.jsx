@@ -10,6 +10,7 @@ import LedgerPage from "./components/LedgerPage";
 import BalanceSheet from "./components/BalanceSheet";
 import AllLedger from "./components/AllLeadger";
 import PLSheet from "./components/PLSheets";
+import PartyPLSheet from "./components/PartyPLSheet";
 
 function App() {
   const dispatch = useDispatch()
@@ -57,6 +58,10 @@ function App() {
           path="/pandl"
           element={<PLSheet />}
           />
+          {/* <Route 
+          path="partyPL"
+          element={<PartyPLSheet />}
+          /> */}
         <Route
           path="*"
           element={<h2 style={{ textAlign: "center" }}>404 - Page Not Found</h2>}

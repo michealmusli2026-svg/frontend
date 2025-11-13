@@ -60,7 +60,7 @@ const TradePage = () => {
     // dispatch(getAllTrades());
     dispatch(fetchParty({ userId: userProfile.user.id }));
     dispatch(fetchUserBalance(userProfile.user.id));
-    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" }));
+    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" , complete:null }));
     dispatch(fetchUserHoldings(userProfile.user.id));
   }, [dispatch, userProfile]);
 
