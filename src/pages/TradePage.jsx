@@ -400,9 +400,9 @@ const TradePage = () => {
         deleteRow={deleteRow}
         addRow={addRow}
         balanceSheetDifference={
-          Math.abs(balances
+          balances
             ?.reduce((sum, entry) => sum + entry.updatedBalance, 0)
-            ?.toFixed(2)) -
+            ?.toFixed(2) -
           (
             (getCapital?.balance || 0) +
             (Object.values(groupedData).reduce(
