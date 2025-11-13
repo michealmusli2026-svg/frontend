@@ -432,9 +432,9 @@ const BalanceSheet = () => {
               {/* <span className="text-green-600 font-bold">₹ 15,150.00</span> */}
               <span className="text-green-600 font-bold">
                 ₹
-                {formatNumberIndian(balances
+                {formatNumberIndian(Math.abs(balances
                   ?.reduce((sum, entry) => sum + entry.updatedBalance, 0)
-                  .toFixed(2) -
+                  .toFixed(2)) -
                   (
                     (getCapital?.balance || 0) +
                     (Object.values(groupedData).reduce(
