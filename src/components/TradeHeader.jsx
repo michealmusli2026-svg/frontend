@@ -88,6 +88,7 @@ const TradeHeader = ({ userProfile }) => {
           onClick={() => {
             localStorage.removeItem("userData");
             window.location.reload();
+            navigate("/")
           }}
           className="flex items-center gap-2 text-red-600 hover:text-red-800 font-semibold transition-all"
         >
