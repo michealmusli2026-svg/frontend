@@ -132,6 +132,13 @@ const TradePage = () => {
         fromRate,
         note,
       } = tradeToExecute;
+      if(fromId.id == ""  || toId.id == "" || fromId.id == "0"  || toId.id == "0"){
+          return setSnackbar({
+              visible: true,
+              type: "error",
+              message: "Kindly Fill Data Properly!",
+            });
+      }
       let fromProfit = 0;
       let fromPercentRemoved = 0;
       let fromTotal = 0;

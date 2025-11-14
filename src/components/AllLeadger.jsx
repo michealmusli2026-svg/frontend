@@ -9,18 +9,27 @@ const AllLedger = () => {
   const users = useSelector((state) => state.user?.data);
   const party = useSelector((state) => state.user?.party);
   const trades = useSelector((state) => state.user?.trade);
-  const userProfile = useMemo(() => JSON.parse(localStorage.getItem("userData")), []);
+  const userProfile = useMemo(
+    () => JSON.parse(localStorage.getItem("userData")),
+    []
+  );
 
   useEffect(() => {
     dispatch(fetchUser());
-        dispatch(fetchParty({ userId: userProfile.user.id }));
-    dispatch(fetchUserTrade({userId:userProfile.user.id,order:"ASC",complete:true}));
+    dispatch(fetchParty({ userId: userProfile.user.id }));
+    dispatch(
+      fetchUserTrade({
+        userId: userProfile.user.id,
+        order: "ASC",
+        complete: true,
+      })
+    );
   }, []);
   // const partyUsers = useMemo(
   //   () => users?.users?.filter((u) => u.role === "party") || [],
   //   [users]
   // );
-  const partyUsers = party?.users
+  const partyUsers = party?.users;
   // useEffect(() => {
   //   if (selectedUser) {
   //     dispatch(fetchUserTrade({userId:userProfile.user.id,order:"ASC"}));
@@ -67,10 +76,15 @@ const AllLedger = () => {
     delete ledger["Profit"];
     delete ledger["Loss"];
     const openingBalance = addOpeningBalance(partyUsers, ledger);
+    const bottomItems = ["Services", "Expense", "Profit", "Loss"];
     const reordered = [
-  ...openingBalance.filter((item) => item.name !== "Services" && item.name !== "Expense"),
-  ...openingBalance.filter((item) => item.name === "Services" || item.name === "Expense"),
-];
+      ...openingBalance.filter((item) => !bottomItems.includes(item.name)),
+      ...openingBalance.filter((item) => bottomItems.includes(item.name)),
+    ];
+    //     const reordered = [
+    //   ...openingBalance.filter((item) => item.name !== "Services" && item.name !== "Expense"),
+    //   ...openingBalance.filter((item) => item.name === "Services" || item.name === "Expense"),
+    // ];
     return reordered;
   }, [trades]);
 
@@ -140,9 +154,11 @@ const AllLedger = () => {
                   : "text-red-600"
               }`}
             >
-              {formatNumberIndian(balances
-                .reduce((sum, entry) => sum + entry.updatedBalance, 0)
-                .toFixed(2))}
+              {formatNumberIndian(
+                balances
+                  .reduce((sum, entry) => sum + entry.updatedBalance, 0)
+                  .toFixed(2)
+              )}
             </td>
           </tr>
         </tbody>

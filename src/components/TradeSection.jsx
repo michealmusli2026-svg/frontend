@@ -165,7 +165,7 @@ const TradeSection = ({
                     handleChange(index, "fromId", e.target.value)}
                   disabled={trade.commoditiesId === ""}
                 >
-                  <option value="">From</option>
+                  <option value={JSON.stringify({id:0,name:"from"})}>From</option>
                   {users
                     ?.filter((user) => user.role !== "user") // exclude role "user"
                     .map((user) => (
@@ -253,7 +253,7 @@ const TradeSection = ({
                     trade.fromQuantity == ""
                   }
                 >
-                  <option value="">TO</option>
+                  <option value={JSON.stringify({id:0,name:"to"})}>TO</option>
                   {users
                     .filter(
                       (user) => user.id != trade.fromId && user.role !== "user"
