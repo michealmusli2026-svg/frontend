@@ -132,7 +132,7 @@ const TradePage = () => {
         fromRate,
         note,
       } = tradeToExecute;
-      if(fromId.id == ""  || toId.id == "" || fromId.id == "0"  || toId.id == "0"){
+      if(fromId.id == ""  || toId.id == "" || fromId.id == "0"  || toId.id == "0" || toRate == "" || fromRate == "") {
           return setSnackbar({
               visible: true,
               type: "error",
