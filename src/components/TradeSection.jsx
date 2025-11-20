@@ -28,6 +28,11 @@ const TradeSection = ({
       : balanceSheetDifference < 0
       ? "text-red-600"
       : "text-gray-500";
+
+  const userProfile = useMemo(
+    () => JSON.parse(localStorage.getItem("userData")),
+    []
+  );
   return (
     <div className="p-2 bg-white rounded-xl shadow-md space-y-2">
       {/* HEADER */}
@@ -52,9 +57,11 @@ const TradeSection = ({
             <span className="text-gray-500">Difference:</span>{" "}
             {/* <span className="text-green-600 font-bold">₹ 15,150.00</span> */}
             <span className={`text-xl font-semibold ${balanceColor}`}>
-              {formatNumberIndian( balanceSheetDifference > 0
-                ? `+${balanceSheetDifference}`
-                : balanceSheetDifference)}
+              {formatNumberIndian(
+                balanceSheetDifference > 0
+                  ? `+${balanceSheetDifference}`
+                  : balanceSheetDifference
+              )}
             </span>
           </p>
         </div>
@@ -70,22 +77,22 @@ const TradeSection = ({
 
       {/* HOLDINGS */}
       {/* <div className="flex flex-wrap items-center gap-3 text-gray-700">
-        <span className="font-semibold text-lg flex items-center gap-1">
-          <FaCoins className="text-yellow-500" />
-          Holdings:
-        </span>
-        {getUserHolding?.holdings?.length > 0 ? (
-          getUserHolding.holdings.map((holding) => (
-            <div
-              key={holding.id}
-              className="bg-gray-100 px-3 py-1 rounded-lg shadow-sm text-sm font-medium"
-            >
-              {holding.commodityName.toUpperCase()}: {holding.quantity}
-            </div>
-          ))
-        ) : (
-          <span className="text-gray-400 text-sm">No holdings available</span>
-        )}
+          <span className="font-semibold text-lg flex items-center gap-1">
+            <FaCoins className="text-yellow-500" />
+            Holdings:
+          </span>
+          {getUserHolding?.holdings?.length > 0 ? (
+            getUserHolding.holdings.map((holding) => (
+              <div
+                key={holding.id}
+                className="bg-gray-100 px-3 py-1 rounded-lg shadow-sm text-sm font-medium"
+              >
+                {holding.commodityName.toUpperCase()}: {holding.quantity}
+              </div>
+            ))
+          ) : (
+            <span className="text-gray-400 text-sm">No holdings available</span>
+          )}
       </div> */}
 
       {/* TRADE INPUT ROWS */}
@@ -129,6 +136,25 @@ const TradeSection = ({
               key={index}
               className={`grid grid-cols-8 gap-3 items-center p-4 rounded-xl shadow ${bgColor} transition-all`}
             >
+              {/* Date Input */}
+              {userProfile.user.id == 39 &&
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Trade Date
+                </label>
+                <input
+                  type="date"
+                  name="tradeDate"
+                  value={trade.tradeDate}
+                  onChange={(e) =>
+                    handleChange(index, "tradeDate", e.target.value)
+                  }                
+                  className="w-full border p-2 rounded"
+                  required
+                />
+              </div>
+            }
+
               {/* COMMODITY */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-1">
@@ -162,14 +188,23 @@ const TradeSection = ({
                   // value={trade.fromId}
                   value={JSON.stringify(trade.fromId)}
                   onChange={(e) =>
-                    handleChange(index, "fromId", e.target.value)}
+                    handleChange(index, "fromId", e.target.value)
+                  }
                   disabled={trade.commoditiesId === ""}
                 >
-                  <option value={JSON.stringify({id:0,name:"from"})}>From</option>
+                  <option value={JSON.stringify({ id: 0, name: "from" })}>
+                    From
+                  </option>
                   {users
                     ?.filter((user) => user.role !== "user") // exclude role "user"
                     .map((user) => (
-                      <option key={user.id} value={JSON.stringify({id:user.id,name:user.username})}>
+                      <option
+                        key={user.id}
+                        value={JSON.stringify({
+                          id: user.id,
+                          name: user.username,
+                        })}
+                      >
                         {user.username}
                       </option>
                     ))}
@@ -253,18 +288,49 @@ const TradeSection = ({
                     trade.fromQuantity == ""
                   }
                 >
-                  <option value={JSON.stringify({id:0,name:"to"})}>TO</option>
+                  <option value={JSON.stringify({ id: 0, name: "to" })}>
+                    TO
+                  </option>
                   {users
                     .filter(
-                      (user) => user.id != trade.fromId && user.role !== "user"
+                      (user) => user.id != trade.fromId
                     )
                     .map((user) => (
-                      <option key={user.id} value={JSON.stringify({id:user.id,name:user.username})}>
+                      <option
+                        key={user.id}
+                        value={JSON.stringify({
+                          id: user.id,
+                          name: user.username,
+                        })}
+                      >
                         {user.username}
                       </option>
                     ))}
                 </select>
               </div>
+
+              {/* TO COMMODITY */}
+              {/* <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  TO Commodity
+                </label>
+
+                <select
+                  className="border p-2 rounded-md focus:ring-2 focus:ring-blue-400 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed"
+                  value={trade.toCommoditiesId}
+                  onChange={(e) =>
+                    handleChange(index, "toCommoditiesId", e.target.value)
+                  }
+                  disabled={trade.sellerId == "" ? true : false}
+                >
+                  <option value="">Select Commodity</option>
+                  {commodities.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </div> */}
 
               {trade.commoditiesId == 6 ||
               trade.commoditiesId == 7 ||
@@ -334,33 +400,56 @@ const TradeSection = ({
               <div className="font-bold text-lg text-gray-700 flex flex-col space-y-1">
                 {trade.commoditiesId == 4 ? (
                   <div>
-                    <div>Purchase:{formatNumberIndian(trade.fromQuantity - fromProfit)}</div>
-                    <div>Sell:{formatNumberIndian(trade.toQuantity - toProfit)}</div>
+                    <div>
+                      Purchase:
+                      {formatNumberIndian(trade.fromQuantity - fromProfit)}
+                    </div>
+                    <div>
+                      Sell:{formatNumberIndian(trade.toQuantity - toProfit)}
+                    </div>
                     <div className="text-red-600 text-sm font-medium">
                       Profit:{" "}
-                      {formatNumberIndian(Number(trade.toQuantity - toProfit) -
-                        Number(trade.fromQuantity - fromProfit))}
+                      {formatNumberIndian(
+                        Number(trade.toQuantity - toProfit) -
+                          Number(trade.fromQuantity - fromProfit)
+                      )}
                     </div>
                   </div>
                 ) : trade.commoditiesId == 6 ? (
                   <div>
-                    <div>Purchase: {formatNumberIndian(Number(trade.fromQuantity))}</div>
-                    <div>Sell: {formatNumberIndian(Number(trade.toQuantity))}</div>
+                    <div>
+                      Purchase: {formatNumberIndian(Number(trade.fromQuantity))}
+                    </div>
+                    <div>
+                      Sell: {formatNumberIndian(Number(trade.toQuantity))}
+                    </div>
                     <div className="text-red-600 text-sm font-medium">
                       Profit:{" "}
-                      {formatNumberIndian(Number(trade.toQuantity) - Number(trade.fromQuantity))}
+                      {formatNumberIndian(
+                        Number(trade.toQuantity) - Number(trade.fromQuantity)
+                      )}
                     </div>
                   </div>
                 ) : (
                   <div>
                     <div>
-                      Purchase: {formatNumberIndian(Number(trade.fromQuantity * trade.fromRate))}
+                      Purchase:{" "}
+                      {formatNumberIndian(
+                        Number(trade.fromQuantity * trade.fromRate)
+                      )}
                     </div>
-                    <div>Sell: {formatNumberIndian(Number(trade.toQuantity * trade.toRate))}</div>
+                    <div>
+                      Sell:{" "}
+                      {formatNumberIndian(
+                        Number(trade.toQuantity * trade.toRate)
+                      )}
+                    </div>
                     <div className="text-red-600 text-sm font-medium">
                       Profit:{" "}
-                      {formatNumberIndian(Number(trade.toQuantity * trade.toRate) -
-                        Number(trade.fromQuantity * trade.fromRate))}
+                      {formatNumberIndian(
+                        Number(trade.toQuantity * trade.toRate) -
+                          Number(trade.fromQuantity * trade.fromRate)
+                      )}
                     </div>
                   </div>
                 )}

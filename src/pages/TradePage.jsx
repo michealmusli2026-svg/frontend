@@ -19,12 +19,18 @@ import Snackbar from "../components/Snackbar";
 const TradePage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+   const userProfile = useMemo(
+    () => JSON.parse(localStorage.getItem("userData")),
+    []
+  );
   const [trades, setTrades] = useState([
     {
+
       // fromId: "",
-      fromId: {id:"",name:""},
+      tradeDate:"",
+      fromId: { id: "", name: "" },
       // toId: "",
-      toId: {id:"",name:""},
+      toId: { id: "", name: "" },
       commoditiesId: "",
       fromQuantity: "",
       fromRate: "",
@@ -47,10 +53,10 @@ const TradePage = () => {
   const getUserTrade = useSelector((state) => state.user?.trade);
   const saveTradeResponse = useSelector((state) => state.trade?.save);
   const getUserHolding = useSelector((state) => state.user?.holdings);
-  const userProfile = useMemo(
-    () => JSON.parse(localStorage.getItem("userData")),
-    []
-  );
+  // const userProfile = useMemo(
+  //   () => JSON.parse(localStorage.getItem("userData")),
+  //   []
+  // );
   const getCapital = useSelector((state) => state.user?.balance);
   // === INITIAL DATA FETCH ===
   useEffect(() => {
@@ -60,7 +66,13 @@ const TradePage = () => {
     // dispatch(getAllTrades());
     dispatch(fetchParty({ userId: userProfile.user.id }));
     dispatch(fetchUserBalance(userProfile.user.id));
-    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC" , complete:null }));
+    dispatch(
+      fetchUserTrade({
+        userId: userProfile.user.id,
+        order: "DESC",
+        complete: null,
+      })
+    );
     dispatch(fetchUserHoldings(userProfile.user.id));
   }, [dispatch, userProfile]);
 
@@ -77,16 +89,19 @@ const TradePage = () => {
     setTrades((prev) => {
       const updated = [...prev];
       updated[index][field] = value;
-      if(field == "fromId" || field == "toId"){
-        updated[index][field] = JSON.parse(value)
+      if (field == "fromId" || field == "toId") {
+        updated[index][field] = JSON.parse(value);
       }
       // if(field === "from" || field === "to"){
       //   updated[index][field][id]=value
       //   updated[index][field][value]=field
       // }
-      if (field === "fromQuantity" && updated[index]["commoditiesId"] !== "6") {
+      if (field === "fromQuantity" && updated[index]["commoditiesId"] !== "6" ) {
         updated[index]["toQuantity"] = value;
       }
+      // if (field === "fromQuantity" && updated[index]["commoditiesId"] !== "6" ) {
+      //   updated[index]["toQuantity"] = value;
+      // }
 
       // if(updated[index]["commoditiesId"] == '6' &&  updated[index]["toId"] !=='18' ){
       //     updated[index]["toQuantity"] = updated[index]["fromQuantity"];
@@ -122,6 +137,7 @@ const TradePage = () => {
   const executeRow = useCallback(
     (index) => {
       const tradeToExecute = trades[index];
+      console.log("initi",tradeToExecute)
       let {
         fromId,
         toId,
@@ -131,13 +147,21 @@ const TradePage = () => {
         fromQuantity,
         fromRate,
         note,
+        tradeDate
       } = tradeToExecute;
-      if(fromId.id == ""  || toId.id == "" || fromId.id == "0"  || toId.id == "0" || toRate == "" || fromRate == "") {
-          return setSnackbar({
-              visible: true,
-              type: "error",
-              message: "Kindly Fill Data Properly!",
-            });
+      if (
+        fromId.id == "" ||
+        toId.id == "" ||
+        fromId.id == "0" ||
+        toId.id == "0" ||
+        toRate == "" ||
+        fromRate == ""
+      ) {
+        return setSnackbar({
+          visible: true,
+          type: "error",
+          message: "Kindly Fill Data Properly!",
+        });
       }
       let fromProfit = 0;
       let fromPercentRemoved = 0;
@@ -204,11 +228,17 @@ const TradePage = () => {
         toTotal: parseFloat(toTotal),
         toQuantity,
         fromQuantity,
-        fromId:fromId.id,
-        toId:toId.id,
+        fromId: fromId.id,
+        toId: toId.id,
+        // toCommoditiesId: userProfile?.user?.id == 36 ? toCommoditiesId : null,
         profit:
           totalProfit > 0 ? totalProfit : Number(toTotal) - Number(fromTotal),
       };
+      if(userProfile?.user?.id == 39){
+          finalTrade["created_at"]=tradeDate,
+          finalTrade["createdAt"]=tradeDate 
+      }
+      console.log("final trade",finalTrade)
       dispatch(saveTrade(finalTrade))
         .then((res) => {
           if (res.meta.requestStatus === "fulfilled") {
@@ -237,9 +267,16 @@ const TradePage = () => {
             },
           ]);
           dispatch(
-            fetchUserTrade({ userId: userProfile.user.id, order: "DESC" , complete:null })
+            fetchUserTrade({
+              userId: userProfile.user.id,
+              order: "DESC",
+              complete: null,
+            })
           );
+          dispatch(fetchUserBalance(userProfile.user.id));
+
         })
+        
         .catch(() =>
           setSnackbar({
             visible: true,
@@ -259,7 +296,13 @@ const TradePage = () => {
           note: "",
         },
       ]);
-      dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC", complete:null  }));
+      dispatch(
+        fetchUserTrade({
+          userId: userProfile.user.id,
+          order: "DESC",
+          complete: null,
+        })
+      );
     },
     [dispatch, trades, userProfile]
   );
@@ -389,7 +432,7 @@ const TradePage = () => {
     const partyUsers = fetchPartyData?.users;
     const openingBalance = addOpeningBalance(partyUsers, ledger);
     // return openingBalance == undefined ? [] : openingBalance;
-    return openingBalance ;
+    return openingBalance;
   }, [getUserTrade]);
 
   return (
