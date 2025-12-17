@@ -11,6 +11,12 @@ const UserManagement = ({
   handleRemoveHolding,
   userData,
 }) => {
+
+   const userProfile = useMemo(
+      () => JSON.parse(localStorage.getItem("userData")),
+      []
+    );
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* ==== User Form ==== */}
@@ -252,6 +258,7 @@ const UserManagement = ({
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-gray-100 text-left text-gray-700">
+              <th className="p-2 border">Code</th>
               <th className="p-2 border">Username</th>
               <th className="p-2 border">Mobile No.</th>
               <th className="p-2 border">Alt Mobile No.</th>
@@ -268,6 +275,7 @@ const UserManagement = ({
                   key={user.id}
                   className="hover:bg-gray-50 transition border-b"
                 >
+                  <td className="p-2 border">{userProfile.user.id}0{user.id}</td>
                   <td className="p-2 border">{user.username}</td>
                   <td className="p-2 border">{user.mobile}</td>
                   <td className="p-2 border">{user.altMobile}</td>

@@ -1,5 +1,5 @@
-const baseURL = "http://15.206.194.195:3000/api"
-// const baseURL = "http://localhost:3000/api"
+// const baseURL = "http://15.206.194.195:3000/api"
+const baseURL = "http://localhost:3000/api"
 export const loginRoute = `${baseURL}/users/login`
 // export const getUserRoute = `${baseURL}/users`
 export const getUserRoute = `${baseURL}/users`

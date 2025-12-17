@@ -15,19 +15,19 @@ import { useNavigate } from "react-router-dom";
 import TradeHeader from "../components/TradeHeader";
 import TradeSection from "../components/TradeSection";
 import Snackbar from "../components/Snackbar";
+import { formatNumberIndian } from "../utils/numberForamt";
 
 const TradePage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-   const userProfile = useMemo(
+  const userProfile = useMemo(
     () => JSON.parse(localStorage.getItem("userData")),
     []
   );
   const [trades, setTrades] = useState([
     {
-
       // fromId: "",
-      tradeDate:"",
+      tradeDate: "",
       fromId: { id: "", name: "" },
       // toId: "",
       toId: { id: "", name: "" },
@@ -39,6 +39,7 @@ const TradePage = () => {
       note: "",
     },
   ]);
+  const [pageNumber , setPageNumber ] = useState(1)
   const [snackbar, setSnackbar] = useState({
     visible: false,
     type: "",
@@ -71,10 +72,11 @@ const TradePage = () => {
         userId: userProfile.user.id,
         order: "DESC",
         complete: null,
+        offset:pageNumber
       })
     );
     dispatch(fetchUserHoldings(userProfile.user.id));
-  }, [dispatch, userProfile]);
+  }, [dispatch, userProfile ,pageNumber]);
 
   // === HANDLE SAVE RESPONSE ===
   // useEffect(() => {
@@ -96,8 +98,13 @@ const TradePage = () => {
       //   updated[index][field][id]=value
       //   updated[index][field][value]=field
       // }
-      if (field === "fromQuantity" && updated[index]["commoditiesId"] !== "6" ) {
+      if (field === "fromQuantity" && updated[index]["commoditiesId"] !== "6") {
+        updated[index][field] = value;
         updated[index]["toQuantity"] = value;
+      }
+      if(updated[index]['commoditiesId'] == 6 && field == "fromQuantity"){
+              updated[index][field] = value;
+              updated[index]["toQuantity"] = value;
       }
       // if (field === "fromQuantity" && updated[index]["commoditiesId"] !== "6" ) {
       //   updated[index]["toQuantity"] = value;
@@ -134,178 +141,245 @@ const TradePage = () => {
     );
   }, []);
 
-  const executeRow = useCallback(
-    (index) => {
-      const tradeToExecute = trades[index];
-      console.log("initi",tradeToExecute)
-      let {
-        fromId,
-        toId,
-        commoditiesId,
-        toQuantity,
-        toRate,
-        fromQuantity,
-        fromRate,
-        note,
-        tradeDate
-      } = tradeToExecute;
-      if (
-        fromId.id == "" ||
-        toId.id == "" ||
-        fromId.id == "0" ||
-        toId.id == "0" ||
-        toRate == "" ||
-        fromRate == ""
-      ) {
-        return setSnackbar({
-          visible: true,
-          type: "error",
-          message: "Kindly Fill Data Properly!",
-        });
-      }
-      let fromProfit = 0;
-      let fromPercentRemoved = 0;
-      let fromTotal = 0;
-      let toProfit = 0;
-      let toPercentRemoved = 0;
-      let toTotal = 0;
-      let totalProfit = 0;
-      if (commoditiesId == "4") {
-        let fromConvertedRate = fromRate / 1000;
-        fromPercentRemoved = (fromQuantity * fromConvertedRate) / 100;
-        // fromTotal = fromQuantity - fromPercentRemoved;
-        fromProfit = (-fromRate * fromQuantity) / 100000;
-        fromTotal = fromQuantity - fromProfit;
-        let toConvertedRate = toRate / 1000;
-        toPercentRemoved = (toQuantity * toConvertedRate) / 100;
-        // toProfit = toQuantity - toPercentRemoved;
-        toProfit = (-toRate * toQuantity) / 100000;
-        toTotal = toQuantity - toProfit;
-        /////
-        // toQuantity = toTotal
-      } else if (commoditiesId == "7") {
+const executeRow = useCallback(
+  async (index) => {
+    const trade = trades[index];
+    const {
+      fromId,
+      toId,
+      commoditiesId,
+      toQuantity,
+      toRate,
+      fromQuantity,
+      fromRate,
+      note,
+      tradeDate,
+    } = trade;
+
+    const requiredCommon =
+  !fromId?.id ||
+  fromId?.id === "0" ||
+  !toId?.id ||
+  toId?.id === "0" ||
+  !tradeDate;
+
+const requiresRatesAndQuantity = commoditiesId !== "6";
+
+const missingRatesAndQty =
+  [toRate, fromRate, toQuantity, fromQuantity].some(
+    (v) => v === null || v === undefined || v === ""
+  );
+
+const requireRemark =
+  commoditiesId === "6" && (!note || note.trim() === "");
+
+if (requiredCommon || (requiresRatesAndQuantity && missingRatesAndQty)) {
+  return setSnackbar({
+    visible: true,
+    type: "error",
+    message: "Kindly Fill Data Properly!",
+  });
+}
+
+if (requireRemark) {
+  return setSnackbar({
+    visible: true,
+    type: "error",
+    message: "Note is Compulsory!",
+  });
+}
+
+    // ---------- CALCULATE TOTALS ----------
+    // let fromTotal = 0, toTotal = 0, totalProfit = 0;
+      let fromTotal = 0, toTotal = 0, totalProfit = 0 ,
+     fromPercentRemoved = 0 , toPercentRemoved = 0,
+     fromProfit = 0 , toProfit = 0 ;
+
+    switch (commoditiesId) {
+      case "4":
+      //    let fromConvertedRate = fromRate / 1000;
+      // fromPercentRemoved = (fromQuantity * fromConvertedRate) / 100;
+      // fromTotal = (-fromRate * fromQuantity) / 100000;
+      // let toConvertedRate = trade.toRate / 1000;  
+      // toPercentRemoved = (trade.toQuantity * toConvertedRate) / 100;
+      // toTotal = (-trade.toRate * trade.toQuantity) / 100000;
+        // fromTotal = fromQuantity - (fromRate * fromQuantity) / 100000;
+        // toTotal = toQuantity - (toRate * toQuantity) / 100000;
+
+          fromTotal = 
+      toQuantity - (toRate * toQuantity) / 100000;
+
+      toTotal = 
+      fromQuantity - (fromRate * fromQuantity) / 100000;
+
+        break;
+      case "7":
+      case "6":
         fromTotal = fromQuantity;
         toTotal = toQuantity;
-      } else if (commoditiesId == "6") {
+        break;
+      case "8":
+        if (fromId?.name === "Profit") {
+          fromTotal = fromQuantity;
+          toTotal = toQuantity;
+          totalProfit = toTotal;
+        } else if (toId?.name === "Loss") {
+          fromTotal = fromQuantity;
+          toTotal = toQuantity;
+        }
+        break;
+      default:
+        fromTotal = Number(fromQuantity) * Number(fromRate || 0);
+        toTotal = Number(toQuantity) * Number(toRate || 0);
+    }
+
+    // Calculate final profit
+    const calculatedProfit =
+      // totalProfit > 0 ? totalProfit : Number(toTotal) - Number(fromTotal);
+      totalProfit > 0 ? totalProfit : toTotal - fromTotal;
+    // ---- SHOW CONFIRMATION POPUP ----
+    if (calculatedProfit > 15000 || calculatedProfit < 0) {
+      return setSnackbar({
+        visible: true,
+        type: "warning",
+        message:
+          calculatedProfit > 15000
+            ? `High Profit: ₹${calculatedProfit.toLocaleString()} please confirm.`
+            : `Loss Detected: ₹${calculatedProfit.toLocaleString()} please confirm.`,
+        checkBox: true,
+        index:index,
+        onConfirm: () => executeConfirmed(index), // Callback here
+      });
+    }
+
+    // If no confirmation needed, execute directly
+    executeConfirmed(index);
+  },
+  [dispatch, trades, userProfile]
+);
+
+const executeConfirmed = async (index) => {
+  const trade = trades[index];
+  const {
+    fromId,
+    toId,
+    commoditiesId,
+    toQuantity,
+    toRate,
+    fromQuantity,
+    fromRate,
+    note,
+    tradeDate,
+  } = trade;
+
+  let fromTotal = 0, toTotal = 0, totalProfit = 0 ,
+     fromPercentRemoved = 0 , toPercentRemoved = 0,
+     fromProfit = 0 , toProfit = 0 ;
+
+  switch (commoditiesId) {
+    case "4":
+      // let fromConvertedRate = fromRate / 1000;
+      // fromPercentRemoved = (fromQuantity * fromConvertedRate) / 100;
+      // fromTotal = (-fromRate * fromQuantity) / 100000;
+      // let toConvertedRate = trade.toRate / 1000;  
+      // toPercentRemoved = (trade.toQuantity * toConvertedRate) / 100;
+      // toTotal = (-trade.toRate * trade.toQuantity) / 100000;
+      
+      fromTotal = 
+      toQuantity - (toRate * toQuantity) / 100000;
+
+      // fromQuantity - (fromRate * fromQuantity) / 100000;
+      toTotal = 
+      fromQuantity - (fromRate * fromQuantity) / 100000;
+      
+      // toQuantity - (toRate * toQuantity) / 100000;
+      break;
+    case "7":
+    case "6":
+      fromTotal = fromQuantity;
+      toTotal = toQuantity;
+      break;
+    case "8":
+      if (fromId?.name === "Profit") {
         fromTotal = fromQuantity;
         toTotal = toQuantity;
-      } else if (commoditiesId == "8") {
-        // if (fromId == "24") {
-        if (fromId.name == "Profit") {
-          fromTotal = fromQuantity;
-          toTotal = toQuantity;
-          totalProfit = toTotal - 0;
-        }
-        // if (toId == "25") {
-        if (toId.name == "Loss") {
-          fromTotal = fromQuantity;
-          toTotal = toQuantity;
-        }
-      } else {
-        fromTotal =
-          fromQuantity && fromRate
-            ? Number(fromQuantity) * Number(fromRate)
-            : 0;
-        toTotal =
-          toQuantity && toRate ? Number(toQuantity) * Number(toRate) : 0;
+        totalProfit = toTotal;
+      } else if (toId?.name === "Loss") {
+        fromTotal = fromQuantity;
+        toTotal = toQuantity;
       }
+      break;
+    default:
+      fromTotal = Number(fromQuantity) * Number(fromRate || 0);
+      toTotal = Number(toQuantity) * Number(toRate || 0);
+  }
+  const finalTrade = {
+    ...trade,
+    note: note || "No Remark",
+    paymentStatus: 2,
+    fromRate: parseFloat(fromRate || 0),
+    toRate: parseFloat(toRate || 0),
+    initiatorId: userProfile.user.id,
+    fromTotal: parseFloat(fromTotal),
+    toTotal: parseFloat(toTotal),
+    toQuantity,
+    fromQuantity,
+    fromId: fromId.id,
+    toId: toId.id,
+    profit: totalProfit > 0 ? totalProfit : toTotal - fromTotal,
+    enterDate: tradeDate
+  };
 
-      // ✅ Simple validation
-      // if (!fromId || !toId || !commoditiesId || !toQuantity || !toRate || !fromQuantity || !fromRate) {
-      //     alert("Please fill all fields before executing the trade.");
-      //     return;
-      // }
+  if ([37, 38].includes(userProfile?.user?.id)) {
+    finalTrade.created_at = tradeDate;
+    finalTrade.createdAt = tradeDate;
+  }
+  try {
+    const res = await dispatch(saveTrade(finalTrade));
 
-      // const totalAmount = Number(quantity) * Number(rate);
-      const finalTrade = {
-        ...tradeToExecute,
-        note: note || "No Remark",
-        paymentStatus: 2,
-        fromRate: parseFloat(fromRate ? fromRate : 0),
-        toRate: parseFloat(toRate ? toRate : 0),
-        initiatorId: userProfile.user.id,
-        fromTotal: parseFloat(fromTotal),
-        toTotal: parseFloat(toTotal),
-        toQuantity,
-        fromQuantity,
-        fromId: fromId.id,
-        toId: toId.id,
-        // toCommoditiesId: userProfile?.user?.id == 36 ? toCommoditiesId : null,
-        profit:
-          totalProfit > 0 ? totalProfit : Number(toTotal) - Number(fromTotal),
-      };
-      if(userProfile?.user?.id == 39){
-          finalTrade["created_at"]=tradeDate,
-          finalTrade["createdAt"]=tradeDate 
-      }
-      console.log("final trade",finalTrade)
-      dispatch(saveTrade(finalTrade))
-        .then((res) => {
-          if (res.meta.requestStatus === "fulfilled") {
-            setSnackbar({
-              visible: true,
-              type: "success",
-              message: "Trade executed successfully!",
-            });
-          } else {
-            setSnackbar({
-              visible: true,
-              type: "error",
-              message: "Failed to execute trade.",
-            });
-          }
-          setTrades([
-            {
-              fromId: "",
-              toId: "",
-              commoditiesId: "",
-              fromQuantity: "",
-              fromRate: "",
-              toRate: "",
-              toQuantity: "",
-              note: "",
-            },
-          ]);
-          dispatch(
-            fetchUserTrade({
-              userId: userProfile.user.id,
-              order: "DESC",
-              complete: null,
-            })
-          );
-          dispatch(fetchUserBalance(userProfile.user.id));
+    setSnackbar({
+      visible: true,
+      type: res.meta.requestStatus === "fulfilled" ? "success" : "error",
+      message:
+        res.meta.requestStatus === "fulfilled"
+          ? "Trade executed successfully!"
+          : "Failed to execute trade.",
+    });
 
-        })
-        
-        .catch(() =>
-          setSnackbar({
-            visible: true,
-            type: "error",
-            message: "An unexpected error occurred.",
-          })
-        );
-      setTrades([
-        {
-          fromId: "",
-          toId: "",
-          commoditiesId: "",
-          fromQuantity: "",
-          fromRate: "",
-          toRate: "",
-          toQuantity: "",
-          note: "",
-        },
-      ]);
+    setTrades([
+      {
+        fromId: "",
+        toId: "",
+        commoditiesId: "",
+        fromQuantity: "",
+        fromRate: "",
+        toRate: "",
+        toQuantity: "",
+        note: "",
+        tradeDate:"",
+      },
+    ]);
+
+    await Promise.all([
       dispatch(
         fetchUserTrade({
           userId: userProfile.user.id,
           order: "DESC",
           complete: null,
+          offset:pageNumber
         })
-      );
-    },
-    [dispatch, trades, userProfile]
-  );
+      ),
+      dispatch(fetchUserBalance(userProfile.user.id)),
+    ]);
+  } catch (err) {
+    setSnackbar({
+      visible: true,
+      type: "error",
+      message: "An unexpected error occurred.",
+    });
+  }
+};
+
 
   const handleLedger = (name) => {
     navigate(`/ledger/${encodeURIComponent(name)}`);
@@ -435,9 +509,20 @@ const TradePage = () => {
     return openingBalance;
   }, [getUserTrade]);
 
+  const nextPage = () => {
+    setPageNumber(pageNumber + 1)
+  }
+
+  const lastPage = () => {
+    setPageNumber(pageNumber - 1)
+  }
+
+  const goToFirstPage = () =>{
+    setPageNumber(1)
+  } 
   return (
-    <div className="p-1">
-      <TradeHeader userProfile={userProfile} />
+    <div className="" >
+      <TradeHeader userProfile={userProfile}/>
       <TradeSection
         getBalance={getBalance}
         getUserHolding={getUserHolding}
@@ -449,31 +534,31 @@ const TradePage = () => {
         executeRow={executeRow}
         deleteRow={deleteRow}
         addRow={addRow}
-        balanceSheetDifference={
-          balances
-            ?.reduce((sum, entry) => sum + entry.updatedBalance, 0)
-            ?.toFixed(2) -
-          (
-            (getCapital?.balance || 0) +
-            (Object.values(groupedData).reduce(
-              (sum, val) => sum + (val["Total Profit"] || 0),
-              0
-            ) -
-              Object.values(groupedData).reduce(
-                (sum, val) =>
-                  sum +
-                  (val["Total Services"] || 0) +
-                  val["Total Expense"] +
-                  +(val["Total Loss"] || 0),
-                0
-              ))
+        balanceSheetDifference={formatNumberIndian(
+          Number(
+            balances?.reduce((sum, entry) => sum + entry.updatedBalance, 0) -
+              ((getCapital?.balance || 0) +
+                Object.values(groupedData).reduce(
+                  (sum, val) => sum + (val["Total Profit"] || 0),
+                  0
+                ) -
+                Object.values(groupedData).reduce(
+                  (sum, val) =>
+                    sum +
+                    (val["Total Services"] || 0) +
+                    (val["Total Expense"] || 0) +
+                    (val["Total Loss"] || 0),
+                  0
+                ))
           ).toFixed(2)
-        }
+        )}
+        
       />
 
       {/* TRADE HISTORY TABLE */}
       <div className="mt-2">
-        <TradeTable tradeList={getUserTrade} handleLedger={handleLedger} />
+        <TradeTable tradeList={getUserTrade} handleLedger={handleLedger} nextPage={nextPage} pageNumber={pageNumber}
+        lastPage={lastPage} goToFirstPage={goToFirstPage}/>
       </div>
 
       <div>
@@ -482,8 +567,11 @@ const TradePage = () => {
             type={snackbar.type}
             message={snackbar.message}
             onClose={() =>
-              setSnackbar({ visible: false, type: "", message: "" })
+              setSnackbar({ visible: false, type: "", message: "" , index:"" })
             }
+            checkBox={snackbar.checkBox}
+            index={snackbar.index}
+            onConfirm={(index)=>executeConfirmed(index)}
           />
         )}
       </div>

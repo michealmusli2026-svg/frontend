@@ -4,6 +4,7 @@ import { getAllTrades } from "../redux/slice/trade";
 import { enumCall } from "../redux/slice/enums";
 import { fetchParty, fetchUser, fetchUserTrade } from "../redux/slice/user"; // ✅ adjust to your actual user slice
 import * as XLSX from "xlsx";
+import { formatNumberIndian } from "../utils/numberForamt";
 
 const AllTrades = () => {
   const dispatch = useDispatch();
@@ -30,7 +31,7 @@ const AllTrades = () => {
     dispatch(getAllTrades());
     dispatch(enumCall());
     dispatch(fetchUser()); // ✅ FIXED: replaced undefined fetchUser()
-    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC",complete:true }));
+    dispatch(fetchUserTrade({ userId: userProfile.user.id, order: "DESC",complete:true ,offset:0}));
       dispatch(fetchParty({ userId: userProfile.user.id }));
   }, [dispatch]);
 
@@ -298,13 +299,13 @@ const AllTrades = () => {
                     <td className="px-4 py-2">{t.fromId?.value}</td>
                     <td className="px-4 py-2">{t.toId?.value}</td>
                     <td className="px-4 py-2 text-right text-red-600">
-                      {t.fromTotal?.value}
+                      {formatNumberIndian(t.fromTotal?.value)}
                     </td>
                     <td className="px-4 py-2 text-right text-green-600">
-                      {t.toTotal?.value}
+                      {formatNumberIndian(t.toTotal?.value)}
                     </td>
                     <td className="px-4 py-2 text-right text-green-600">
-                      {t.profit?.value}
+                      {formatNumberIndian(t.profit?.value)}
                     </td>
                   </tr>
                 </>
@@ -328,7 +329,7 @@ const AllTrades = () => {
             <span className="text-gray-500">Net Profit:</span>{" "}
             {/* <span className="text-green-600 font-bold">₹ 15,150.00</span> */}
             <span className="text-green-600 font-bold">
-              ₹ {filteredTrades?.reduce((acc, trade) => acc + (trade.profit?.value || 0), 0)}
+              ₹ {formatNumberIndian(filteredTrades?.reduce((acc, trade) => acc + (trade.profit?.value || 0), 0))}
             </span>
           </p>
         </div>

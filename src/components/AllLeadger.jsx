@@ -2,13 +2,16 @@ import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchParty, fetchUser, fetchUserTrade } from "../redux/slice/user";
 import { formatNumberIndian } from "../utils/numberForamt";
+import { useNavigate } from "react-router-dom";
 
-const AllLedger = () => {
+const AllLedger = ({showPartyLedger}) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate()
   const [selectedUser, setSelectedUser] = useState(null);
   const users = useSelector((state) => state.user?.data);
   const party = useSelector((state) => state.user?.party);
   const trades = useSelector((state) => state.user?.trade);
+  const [filter , setFilter ] = useState(true)
   const userProfile = useMemo(
     () => JSON.parse(localStorage.getItem("userData")),
     []
@@ -22,6 +25,7 @@ const AllLedger = () => {
         userId: userProfile.user.id,
         order: "ASC",
         complete: true,
+        offset:0
       })
     );
   }, []);
@@ -76,39 +80,33 @@ const AllLedger = () => {
     delete ledger["Profit"];
     delete ledger["Loss"];
     const openingBalance = addOpeningBalance(partyUsers, ledger);
+    const filtered = filter ? openingBalance.filter(item => item.updatedBalance !== 0) : openingBalance ;
+
     const bottomItems = ["Services", "Expense", "Profit", "Loss"];
     const reordered = [
-      ...openingBalance.filter((item) => !bottomItems.includes(item.name)),
-      ...openingBalance.filter((item) => bottomItems.includes(item.name)),
+      ...filtered.filter((item) => !bottomItems.includes(item.name)),
+      ...filtered.filter((item) => bottomItems.includes(item.name)),
     ];
     //     const reordered = [
     //   ...openingBalance.filter((item) => item.name !== "Services" && item.name !== "Expense"),
     //   ...openingBalance.filter((item) => item.name === "Services" || item.name === "Expense"),
     // ];
-    return reordered;
-  }, [trades]);
+    return filtered;
+  }, [trades , filter]);
+ const handleLedger = (name) => {
+    navigate(`/ledger/${encodeURIComponent(name)}`);
+  };
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* <h2 className="text-2xl font-bold mb-4 text-gray-700">Balance Sheet</h2> */}
-      {/* <div className="mb-6 flex flex-wrap items-center gap-3">
-                <label className="text-gray-700 font-medium">Select Party:</label>
-                <select
-                    className="border border-gray-300 rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-400"
-                    value={selectedUser?.id || ""}
-                    onChange={(e) => {
-                        const user = partyUsers.find((u) => u.id === Number(e.target.value));
-                        setSelectedUser(user);
-                    }}
-                >
-                    <option value="">-- Select Party --</option>
-                    {partyUsers.map((user) => (
-                        <option key={user.id} value={user.id}>
-                            {user.username}
-                        </option>
-                    ))}
-                </select>
-            </div> */}
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+                <label className="text-gray-700 font-medium">See All Ledgers</label>
+                <input 
+                  type="checkbox"
+                  onClick={()=>setFilter(!filter)}
+                />
+            </div>
       <table className="min-w-full bg-white rounded-xl shadow-md overflow-hidden">
         <thead className="bg-gray-200 text-gray-700">
           <tr>
@@ -119,12 +117,19 @@ const AllLedger = () => {
           </tr>
         </thead>
         <tbody>
-          {balances.map((entry) => (
+          {balances.map((entry,index) => (
+            <>
             <tr
               key={entry.name}
-              className="border-t hover:bg-gray-50 transition duration-150"
+              // className="border-t hover:bg-gray-50 transition duration-150"
+              className={`border-t text-sm transition-all ${
+                        index % 2 === 0 ? "bg-red-100" : "bg-blue-100"
+                      } 
+                      ${index % 2 === 0 ? "hover:bg-red-200" : "hover:bg-blue-200" }
+                      `}
             >
-              <td className="py-2 px-4 font-medium text-gray-800">
+              <td className=" px-4 py-2 cursor-pointer hover:underline text-blue-600"
+              onClick={() => showPartyLedger(entry.name)}>
                 {entry.name}
               </td>
               {/* <td className="py-2 px-4 text-right">
@@ -141,6 +146,7 @@ const AllLedger = () => {
                 {formatNumberIndian(entry.updatedBalance)}
               </td>
             </tr>
+            </>
           ))}
           <tr>
             <td className="py-2 px-4 font-bold text-gray-900">Total</td>

@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addCommodity, enumCall } from "../redux/slice/enums";
-import { createCustomer, createUser, fetchParty, fetchUser } from "../redux/slice/user";
+import {
+  createCustomer,
+  createUser,
+  fetchParty,
+  fetchUser,
+} from "../redux/slice/user";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import AllTrades from "../components/AllTrades";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +18,10 @@ const Setting = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("users");
-  const userProfile = useMemo(() => JSON.parse(localStorage.getItem("userData")), []);
+  const userProfile = useMemo(
+    () => JSON.parse(localStorage.getItem("userData")),
+    []
+  );
   const [formData, setFormData] = useState({
     username: "",
     Ref: "",
@@ -86,7 +94,7 @@ const Setting = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.role === 3) {
-      formData["underUser"] = userProfile.user.id
+      formData["underUser"] = userProfile.user.id;
       dispatch(createCustomer(formData))
         .then((res) => {
           if (res?.meta?.requestStatus == "fulfilled") {
@@ -95,9 +103,20 @@ const Setting = () => {
               type: "success",
               message: "User Created successfully!",
             });
+            setFormData({
+              username: "",
+              Ref: "",
+              password: "",
+              mobile: "",
+              altMobile: "",
+              whatApp: "",
+              role: 3,
+              openingBalance: "",
+              currencyFormat: null,
+              commoditiesHolding: [{ commoditiesId: null, quantity: null }],
+            });
             dispatch(fetchUser());
-    dispatch(fetchParty({ userId: userProfile.user.id }));
-
+            dispatch(fetchParty({ userId: userProfile.user.id }));
           } else {
             setSnackbar({
               visible: true,
@@ -112,8 +131,7 @@ const Setting = () => {
         .then((res) => {
           if (res?.meta?.requestStatus == "fullfilled") {
             dispatch(fetchUser());
-    dispatch(fetchParty({ userId: userProfile.user.id }));
-
+            dispatch(fetchParty({ userId: userProfile.user.id }));
           }
         })
         .catch((err) => console.log("Error Creating User:", err));
@@ -130,8 +148,8 @@ const Setting = () => {
           type: "success",
           message: "Commodity Added successfully!",
         });
-        setShowAddCommodity(false)
-        setNewCommodity("")
+        setShowAddCommodity(false);
+        setNewCommodity("");
         dispatch(enumCall());
       } else {
         setSnackbar({
@@ -144,7 +162,7 @@ const Setting = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="">
       {/* ===== Navbar ===== */}
       <TradeHeader userProfile={userProfile} />
 
@@ -184,200 +202,6 @@ const Setting = () => {
 
       {/* ===== USER LIST TAB ===== */}
       {activeTab === "users" && (
-        // <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        //     {/* ==== User Form ==== */}
-        //     <form
-        //         onSubmit={handleSubmit}
-        //         className="p-6 bg-white rounded-2xl shadow"
-        //     >
-        //         <h2 className="text-lg font-semibold mb-4">Add / Edit User</h2>
-
-        //         <div className="mb-3">
-        //             {/* <label className="block text-sm font-medium">Username</label> */}
-        //             <input
-        //                 name="username"
-        //                 value={formData.username}
-        //                 onChange={handleChange}
-        //                 placeholder="Username"
-        //                 className="w-full border rounded px-3 py-2"
-        //                 required
-        //             />
-        //         </div>
-
-        //         <div className="mb-3">
-        //             {/* <label className="block text-sm font-medium">Email</label> */}
-        //             <input
-        //                 name="email"
-        //                 type="email"
-        //                 value={formData.email}
-        //                 onChange={handleChange}
-        //                 className="w-full border rounded px-3 py-2"
-        //                 placeholder="Email"
-        //                 required
-        //             />
-        //         </div>
-
-        //         <div className="mb-3">
-        //             {/* <label className="block text-sm font-medium">Password</label> */}
-        //             <input
-        //                 name="password"
-        //                 type="password"
-        //                 value={formData.password}
-        //                 onChange={handleChange}
-        //                 className="w-full border rounded px-3 py-2"
-        //                 placeholder="Temporary Password"
-        //                 required
-        //             />
-        //         </div>
-
-        //         <div className="mb-3">
-        //             {/* <label className="block text-sm font-medium">Role</label> */}
-        //             <select
-        //                 name="role"
-        //                 value={formData.role}
-        //                 onChange={handleChange}
-        //                 className="w-full border rounded px-3 py-2"
-
-        //                 required
-        //             >
-        //                 <option value="">Select Role</option>
-        //                 {enumData?.roles?.map((r) => (
-        //                     <option key={r.id} value={r.id}>
-        //                         {r.name}
-        //                     </option>
-        //                 ))}
-        //             </select>
-        //         </div>
-
-        //         <div className="mb-3">
-        //             {/* <label className="block text-sm font-medium">Balance</label> */}
-        //             <input
-        //                 name="balance"
-        //                 value={formData.balance}
-        //                 onChange={handleChange}
-        //                 type="number"
-        //                 placeholder="Balance"
-        //                 className="w-full border rounded px-3 py-2"
-        //             />
-        //         </div>
-        //         <div className="mb-3">
-        //             {/* <label className="block text-sm font-medium">Currency Format</label> */}
-        //             <select
-        //                 name="currencyFormat"
-        //                 value={formData.currencyFormat}
-        //                 onChange={handleChange}
-        //                 className="w-full border rounded px-3 py-2"
-        //                 required
-        //             >
-        //                 <option value="">Select Currency</option>
-        //                 {enumData?.currencies?.map((r) => (
-        //                     <option key={r.id} value={r.id}>
-        //                         {r.code}
-        //                     </option>
-        //                 ))}
-        //             </select>
-        //         </div>
-        //         {/* ===== Holdings ===== */}
-        //         <div className="mb-3">
-        //             <div className="flex items-center justify-between mb-2">
-        //                 <label className="block text-sm font-medium justify-between">
-        //                     Commodities Holding
-        //                 </label>
-        //                 <button
-        //                     type="button"
-        //                     onClick={handleAddHolding}
-        //                     className="flex items-center text-blue-600 text-sm hover:text-blue-800"
-        //                 >
-        //                     <FaPlus className="mr-1" /> Add Commodity
-        //                 </button>
-        //             </div>
-
-        //             {formData.commoditiesHolding.map((item, index) => (
-        //                 <div
-        //                     key={index}
-        //                     className="flex items-center space-x-2 mb-2 border p-2 rounded"
-        //                 >
-        //                     <select
-        //                         value={item.commoditiesId}
-        //                         onChange={(e) =>
-        //                             handleHoldingChange(index, "commoditiesId", e.target.value)
-        //                         }
-        //                         className="flex-1 border rounded px-2 py-1"
-        //                     >
-        //                         <option value="">Select Commodity</option>
-        //                         {enumData?.commodities?.map((c) => (
-        //                             <option key={c.id} value={c.id}>
-        //                                 {c.name}
-        //                             </option>
-        //                         ))}
-        //                     </select>
-
-        //                     <input
-        //                         type="number"
-        //                         value={item.quantity}
-        //                         onChange={(e) =>
-        //                             handleHoldingChange(index, "quantity", e.target.value)
-        //                         }
-        //                         className="w-24 border rounded px-2 py-1"
-        //                         placeholder="Qty"
-        //                     />
-
-        //                     {formData.commoditiesHolding.length > 1 && (
-        //                         <button
-        //                             type="button"
-        //                             onClick={() => handleRemoveHolding(index)}
-        //                             className="text-red-600 hover:text-red-800"
-        //                         >
-        //                             <FaTrash />
-        //                         </button>
-        //                     )}
-        //                 </div>
-        //             ))}
-        //         </div>
-
-        //         <button
-        //             type="submit"
-        //             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-        //         >
-        //             Save User
-        //         </button>
-        //     </form>
-
-        //     {/* ==== User Table ==== */}
-        //     <div className="overflow-x-auto bg-white rounded-2xl shadow p-6">
-        //         <h2 className="text-lg font-semibold mb-4">User List</h2>
-        //         <table className="w-full text-sm border-collapse">
-        //             <thead>
-        //                 <tr className="bg-gray-100 text-left">
-        //                     <th className="p-2 border">Username</th>
-        //                     <th className="p-2 border">Email</th>
-        //                     <th className="p-2 border">Role</th>
-        //                     <th className="p-2 border">Balance</th>
-        //                     <th className="p-2 border">Holdings</th>
-        //                 </tr>
-        //             </thead>
-        //             <tbody>
-        //                 {userData?.users?.map((user) => (
-        //                     <tr key={user.id} className="hover:bg-gray-50">
-        //                         <td className="p-2 border">{user.username}</td>
-        //                         <td className="p-2 border">{user.email}</td>
-        //                         <td className="p-2 border">{user.role}</td>
-        //                         <td className="p-2 border">{user.balance}</td>
-        //                         <td className="p-2 border">
-        //                             {user.holdings?.length
-        //                                 ? user.holdings
-        //                                     .map(
-        //                                         (h) => `${h.commodityName} (${h.quantity})`
-        //                                     )
-        //                                     .join(", ")
-        //                                 : "—"}
-        //                         </td>
-        //                     </tr>
-        //                 ))}
-        //             </tbody>
-        //         </table>
-        //     </div>
-        // </div>
         <UserManagement
           handleSubmit={handleSubmit}
           formData={formData}

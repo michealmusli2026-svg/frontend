@@ -30,9 +30,9 @@ export const fetchUserBalance = createAsyncThunk(
 
 export const fetchUserTrade = createAsyncThunk(
   "user/fetchTrade",
-  async ({userId,order,complete}, { rejectWithValue }) => {
+  async ({userId,order,complete,offset}, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${getUserRoute}/trade/${userId}/${order}/${complete}`);
+      const response = await axios.get(`${getUserRoute}/trade/${userId}/${order}/${complete}/${offset}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);

@@ -110,8 +110,8 @@ const TradeSection = ({
 
             let toConvertedRate = trade.toRate / 1000;
             toPercentRemoved = (trade.toQuantity * toConvertedRate) / 100;
-            // toProfit = trade.toQuantity - toPercentRemoved;
             toProfit = (-trade.toRate * trade.toQuantity) / 100000;
+            // toProfit = trade.toQuantity - toPercentRemoved;
           }
           // else {
           //   total =
@@ -137,7 +137,7 @@ const TradeSection = ({
               className={`grid grid-cols-8 gap-3 items-center p-4 rounded-xl shadow ${bgColor} transition-all`}
             >
               {/* Date Input */}
-              {userProfile.user.id == 39 &&
+              {/* {(userProfile.user.id == 37 || userProfile.user.id == 38) && */}
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Trade Date
@@ -149,14 +149,16 @@ const TradeSection = ({
                   onChange={(e) =>
                     handleChange(index, "tradeDate", e.target.value)
                   }                
+                  //  min={new Date().toISOString().split("T")[0]}
+                  max={new Date().toISOString().split("T")[0]}
                   className="w-full border p-2 rounded"
                   required
                 />
               </div>
-            }
+            {/* } */}
 
               {/* COMMODITY */}
-              <div className="flex flex-col">
+              <div className="flex flex-col" id="commodity">
                 <label className="text-sm font-medium text-gray-700 mb-1">
                   Select Commodity
                 </label>
@@ -196,7 +198,7 @@ const TradeSection = ({
                     From
                   </option>
                   {users
-                    ?.filter((user) => user.role !== "user") // exclude role "user"
+                    ?.filter((user) => user.role !== "user" && user.username !== "Expense") // exclude role "user"
                     .map((user) => (
                       <option
                         key={user.id}
@@ -205,7 +207,7 @@ const TradeSection = ({
                           name: user.username,
                         })}
                       >
-                        {user.username}
+                        {userProfile.user.id}0{user.id}{" "}{user.username}
                       </option>
                     ))}
                 </select>
@@ -252,6 +254,7 @@ const TradeSection = ({
                       disabled={trade.fromId.id == ""}
                     />
                   </div>
+
                   {/* RATE */}
                   <div className="flex flex-col">
                     <label className="text-sm font-medium text-gray-700 mb-1">
@@ -350,7 +353,8 @@ const TradeSection = ({
                       onChange={(e) =>
                         handleChange(index, "toQuantity", e.target.value)
                       }
-                      disabled={trade.toId.id == ""}
+                      // disabled={trade.toId.id == ""}
+                      disabled={true}
                     />
                   </div>
                 </>
@@ -402,54 +406,54 @@ const TradeSection = ({
                   <div>
                     <div>
                       Purchase:
-                      {formatNumberIndian(trade.fromQuantity - fromProfit)}
+                      {trade.fromQuantity - fromProfit}
                     </div>
                     <div>
-                      Sell:{formatNumberIndian(trade.toQuantity - toProfit)}
+                      Sell:{trade.toQuantity - toProfit}
                     </div>
                     <div className="text-red-600 text-sm font-medium">
                       Profit:{" "}
-                      {formatNumberIndian(
+                      {
                         Number(trade.toQuantity - toProfit) -
                           Number(trade.fromQuantity - fromProfit)
-                      )}
+                      }
                     </div>
                   </div>
                 ) : trade.commoditiesId == 6 ? (
                   <div>
                     <div>
-                      Purchase: {formatNumberIndian(Number(trade.fromQuantity))}
+                      Purchase: {Number(trade.fromQuantity)}
                     </div>
                     <div>
-                      Sell: {formatNumberIndian(Number(trade.toQuantity))}
+                      Sell: {Number(trade.toQuantity)}
                     </div>
                     <div className="text-red-600 text-sm font-medium">
                       Profit:{" "}
-                      {formatNumberIndian(
+                      {
                         Number(trade.toQuantity) - Number(trade.fromQuantity)
-                      )}
+                      }
                     </div>
                   </div>
                 ) : (
                   <div>
                     <div>
                       Purchase:{" "}
-                      {formatNumberIndian(
+                      {
                         Number(trade.fromQuantity * trade.fromRate)
-                      )}
+                      }
                     </div>
                     <div>
                       Sell:{" "}
-                      {formatNumberIndian(
+                      {
                         Number(trade.toQuantity * trade.toRate)
-                      )}
+                      }
                     </div>
                     <div className="text-red-600 text-sm font-medium">
                       Profit:{" "}
-                      {formatNumberIndian(
+                      {
                         Number(trade.toQuantity * trade.toRate) -
                           Number(trade.fromQuantity * trade.fromRate)
-                      )}
+                      }
                     </div>
                   </div>
                 )}
@@ -470,7 +474,7 @@ const TradeSection = ({
               {/* ACTIONS */}
               <div className="flex space-x-2">
                 <button
-                  onClick={() => executeRow(index)}
+                  onClick={() => {executeRow(index) ,document.activeElement.blur()}}
                   disabled={trade.disable}
                   className={`w-[50%] p-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 flex items-center justify-center transition-all ${
                     trade.disable ? "opacity-50 cursor-not-allowed" : ""

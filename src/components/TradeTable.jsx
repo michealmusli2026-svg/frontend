@@ -16,7 +16,14 @@ import { useNavigate } from "react-router-dom";
 import { fetchUserTrade, updateUserTrade } from "../redux/slice/user";
 import Snackbar from "./Snackbar";
 import { formatNumberIndian } from "../utils/numberForamt";
-const TradeTable = ({ tradeList, handleLedger }) => {
+const TradeTable = ({
+  tradeList,
+  handleLedger,
+  nextPage,
+  lastPage,
+  pageNumber,
+  goToFirstPage
+}) => {
   const dispatch = useDispatch();
   const navigate = useNavigate;
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -93,6 +100,7 @@ const TradeTable = ({ tradeList, handleLedger }) => {
             userId: userProfile.user.id,
             order: "DESC",
             complete: null,
+            offset: pageNumber,
           })
         );
       })
@@ -140,6 +148,7 @@ const TradeTable = ({ tradeList, handleLedger }) => {
               userId: userProfile.user.id,
               order: "DESC",
               complete: null,
+              offset:0,
             })
           );
         })
@@ -253,9 +262,9 @@ const TradeTable = ({ tradeList, handleLedger }) => {
           <FaExchangeAlt className="text-blue-600" />
           Trade Records
         </h2>
-        <span className="text-gray-500 text-sm">
+        {/* <span className="text-gray-500 text-sm">
           Total: {tradeList?.length || 0} trades
-        </span>
+        </span> */}
       </div>
 
       {/* TABLE */}
@@ -264,16 +273,17 @@ const TradeTable = ({ tradeList, handleLedger }) => {
           <thead className="bg-gray-100">
             <tr>
               {[
-                { label: "Created At", key: "createdAt" },
-                { label: "Commodity", key: "commodity" },
+                { label: "ADate", key: "createdAt" },
+                { label: "EDate", key: "Enter Date" },
+                { label: "Como", key: "commodity" },
                 { label: "From", key: "fromId" },
-                { label: "From Quantity", key: "fromQuantity" },
-                { label: "From Rate", key: "fromRate" },
-                { label: "From Total", key: "fromTotal" },
+                { label: "FQuant", key: "fromQuantity" },
+                { label: "FRate", key: "fromRate" },
+                { label: "FTotal", key: "fromTotal" },
                 { label: "To", key: "toId" },
-                { label: "To Quantity", key: "toQuantity" },
-                { label: "To Rate", key: "toRate" },
-                { label: "To Total", key: "toTotal" },
+                { label: "TQuant", key: "toQuantity" },
+                { label: "TRate", key: "toRate" },
+                { label: "TTotal", key: "toTotal" },
                 { label: "Profit", key: "profit" },
                 // { label: "Payment Status", key: "paymentStatus" },
                 { label: "Action", key: null },
@@ -297,17 +307,26 @@ const TradeTable = ({ tradeList, handleLedger }) => {
                   item.paymentStatus?.value === "paid" ||
                   item.paymentStatus === "paid";
                 const isEditing = editingRow === item.tradeId;
-
                 return (
                   <React.Fragment key={index}>
                     <tr
                       className={`border-t text-sm transition-all ${
-                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-gray-100`}
+                        index % 2 === 0 ? "bg-red-100" : "bg-blue-100"
+                      } 
+                      ${
+                        index % 2 === 0
+                          ? "hover:bg-red-200"
+                          : "hover:bg-blue-200"
+                      }
+                      `}
                     >
                       {/* Created At */}
                       <td className="px-4 py-2 text-gray-700 font-medium">
                         {formatDate(item.createdAt)}
+                      </td>
+                       <td className="px-4 py-2 text-gray-700 font-medium">
+                        {/* {formatDate(item.enterDate) || null} */}
+                        {item.enterDate == null ? "-" : formatDate(item.enterDate)}
                       </td>
 
                       {/* Commodity */}
@@ -322,7 +341,9 @@ const TradeTable = ({ tradeList, handleLedger }) => {
                       >
                         {item.fromId.value}
                       </td>
-                      <td className="px-4 py-2">{item.fromQuantity.value}</td>
+                      <td className="px-4 py-2">
+                        {formatNumberIndian(item.fromQuantity.value)}
+                      </td>
                       {/* <td className="px-4 py-2">{item.fromRate.value}</td> */}
                       <td className="px-4 py-2">
                         {formatNumberIndian(item.fromRate.value)}
@@ -339,8 +360,12 @@ const TradeTable = ({ tradeList, handleLedger }) => {
                       >
                         {item.toId.value}
                       </td>
-                      <td className="px-4 py-2">{item.toQuantity.value}</td>
-                      <td className="px-4 py-2">{item.toRate.value}</td>
+                      <td className="px-4 py-2">
+                        {formatNumberIndian(item.toQuantity.value)}
+                      </td>
+                      <td className="px-4 py-2">
+                        {formatNumberIndian(item.toRate.value)}
+                      </td>
                       <td className="px-4 py-2">
                         {formatNumberIndian(item.toTotal.value)}
                       </td>
@@ -399,9 +424,7 @@ const TradeTable = ({ tradeList, handleLedger }) => {
                                 disabled={item.completed == 1}
                               >
                                 <FaCheckCircle />
-                                {item.completed == 1
-                                  ? "Completed"
-                                  : "Complete"}
+                                {item.completed == 1 ? "Completed" : "Complete"}
                               </button>
                             )}
                         </div>
@@ -479,6 +502,44 @@ const TradeTable = ({ tradeList, handleLedger }) => {
           </tbody>
         </table>
       </div>
+     <div className="flex justify-center items-center gap-3 mt-6">
+  {/* Jump to First */}
+  <button
+    className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 border transition-all
+      ${pageNumber === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-100"}
+    `}
+    onClick={() => goToFirstPage()}
+    disabled={pageNumber === 1}
+  >
+    ⏮ First
+  </button>
+
+  {/* Last Page */}
+  <button
+    className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 border transition-all
+      ${pageNumber === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-100"}
+    `}
+    onClick={() => lastPage()}
+    disabled={pageNumber === 1}
+  >
+    ◀ Prev
+  </button>
+
+  {/* Page Display */}
+  <span className="px-4 py-2 text-sm font-semibold bg-blue-100 rounded-lg border">
+    Page {pageNumber}
+  </span>
+
+  {/* Next Page */}
+  <button
+    className="px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 border bg-white hover:bg-gray-100 transition-all"
+    onClick={() => nextPage()}
+  >
+    Next ▶
+  </button>
+</div>
+
+
       <div>
         {snackbar.visible && (
           <Snackbar

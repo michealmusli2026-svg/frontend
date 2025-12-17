@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../redux/slice/login";
 import Snackbar from "../components/Snackbar";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -13,6 +14,7 @@ const Login = () => {
       message: "",
     });
   const dispatch = useDispatch();
+  const navigate = useNavigate()
   const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(loginUser({ username, password })).then((res) => {
@@ -22,6 +24,7 @@ const Login = () => {
           type: "success",
           message: "Login Success",
         });
+        navigate('/trade')
       } else {
         setSnackbar({
           visible: true,

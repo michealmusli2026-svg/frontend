@@ -27,6 +27,7 @@ const PartyPLSheet = () => {
         userId: userProfile.user.id,
         order: "DESC",
         complete: true,
+        offset:0
       })
     );
     dispatch(fetchParty({ userId: userProfile.user.id }));
@@ -55,9 +56,10 @@ const PartyPLSheet = () => {
   const filteredTrades = useMemo(() => {
   return getUserTrade?.filter((trade) => {
     if (!trade?.createdAt) return false;
+    if (!trade?.enterDate) return false;
 
     // Convert and normalize to date-only (ignore time)
-    const tradeDate = new Date(trade.createdAt);
+    const tradeDate = new Date(trade.enterDate);
     const tradeDateOnly = new Date(
       tradeDate.getFullYear(),
       tradeDate.getMonth(),
@@ -335,22 +337,22 @@ const PartyPLSheet = () => {
                 key={t.tradeId}
                 className="hover:bg-indigo-50 transition-colors duration-150 border-t"
               >
-                <td className="p-3">{new Date(t.createdAt).toLocaleDateString()}</td>
+                <td className="p-3">{new Date(t.enterDate).toLocaleDateString()}</td>
                 <td className="p-3">{t.commodity.value}</td>
                 {/* <td className="p-3">{t.fromId.value}</td> */}
                 {/* <td className="p-3">{t.toId.value}</td> */}
                 <td className="p-3 text-right font-medium text-slate-600">
-                  {t.displayPurchase.toFixed(2)}
+                  {formatNumberIndian(t.displayPurchase)}
                 </td>
                 <td className="p-3 text-right font-medium text-slate-600">
-                  {t.displaySale.toFixed(2)}
+                  {formatNumberIndian(t.displaySale)}
                 </td>
                 <td
                   className={`p-3 text-right font-semibold ${
-                    t.displayProfit >= 0 ? "text-emerald-600" : "text-red-500"
+                    formatNumberIndian(t.displayProfit) >= 0 ? "text-emerald-600" : "text-red-500"
                   }`}
                 >
-                  {t.displayProfit.toFixed(2)}
+                  {formatNumberIndian(t.displayProfit)}
                 </td>
               </tr>
             ))
@@ -373,9 +375,9 @@ const PartyPLSheet = () => {
           <span className="text-emerald-600 font-bold">
             ₹{" "}
             {selectedParty == "" ? 0 :
-            displayedTrades
+            formatNumberIndian(displayedTrades
               ?.reduce((acc, trade) => acc + (trade.displayProfit || 0), 0)
-              .toFixed(2)
+              )
             }
           </span>
         </p>
